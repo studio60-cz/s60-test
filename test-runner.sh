@@ -146,6 +146,9 @@ function test_badwolf_api() {
         "clients")
             test_badwolf_clients
             ;;
+        "soft-delete")
+            test_badwolf_soft_delete
+            ;;
         *)
             log_error "Unknown BadWolf test suite: $suite"
             return 1
@@ -182,8 +185,8 @@ function test_badwolf_smoke() {
         failed=$((failed + 1))
     fi
 
-    # Test /clients
-    if curl -sf https://be.s60dev.cz/clients | jq -e 'type == "array"' > /dev/null; then
+    # Test /clients (paginated response)
+    if curl -sf https://be.s60dev.cz/clients | jq -e '.data | type == "array"' > /dev/null; then
         log_info "  ✅ GET /clients"
     else
         log_error "  ❌ GET /clients"
@@ -268,17 +271,91 @@ function test_badwolf_locations() {
     fi
 }
 
+function test_badwolf_soft_delete() {
+    log_info "Running BadWolf soft delete tests..."
+
+    local failed=0
+
+    # Get a course ID that has dependencies (course dates)
+    local course_id=$(curl -s "https://be.s60dev.cz/applications?limit=1" | jq -r '.data[0].courseDate.courseId')
+
+    if [ -z "$course_id" ] || [ "$course_id" == "null" ]; then
+        log_error "  ❌ Could not find course with dependencies"
+        return 1
+    fi
+
+    log_info "  Testing with course ID: $course_id"
+
+    # Test soft delete (should archive, not hard delete)
+    local delete_result=$(curl -s -X DELETE "https://be.s60dev.cz/courses/$course_id")
+    local is_soft=$(echo "$delete_result" | jq -r '.soft')
+    local deleted=$(echo "$delete_result" | jq -r '.deleted')
+
+    if [ "$deleted" == "true" ] && [ "$is_soft" == "true" ]; then
+        log_info "  ✅ DELETE /courses/:id soft deleted (has dependencies)"
+    else
+        log_error "  ❌ DELETE /courses/:id expected soft=true, got: $delete_result"
+        failed=$((failed + 1))
+    fi
+
+    # Test restore
+    local restore_result=$(curl -s -X PATCH "https://be.s60dev.cz/courses/$course_id/restore")
+    local restored=$(echo "$restore_result" | jq -r '.restored')
+
+    if [ "$restored" == "true" ]; then
+        log_info "  ✅ PATCH /courses/:id/restore restored successfully"
+    else
+        log_error "  ❌ PATCH /courses/:id/restore failed: $restore_result"
+        failed=$((failed + 1))
+    fi
+
+    # Verify course is accessible again
+    if curl -sf "https://be.s60dev.cz/courses/$course_id" | jq -e '.id' > /dev/null; then
+        log_info "  ✅ GET /courses/:id accessible after restore"
+    else
+        log_error "  ❌ GET /courses/:id not accessible after restore"
+        failed=$((failed + 1))
+    fi
+
+    [ $failed -eq 0 ] && return 0 || return 1
+}
+
 function test_badwolf_clients() {
     log_info "Running BadWolf /clients tests..."
 
-    if curl -sf https://be.s60dev.cz/clients > /dev/null 2>&1; then
-        local count=$(curl -s https://be.s60dev.cz/clients | jq 'length')
-        log_info "  ✅ GET /clients returns $count clients"
-        return 0
+    local failed=0
+
+    # Test list endpoint (paginated)
+    local response=$(curl -s https://be.s60dev.cz/clients)
+    local count=$(echo "$response" | jq '.data | length')
+    local total=$(echo "$response" | jq -r '.meta.total')
+
+    if [ "$count" -gt 0 ] && [ "$total" -gt 0 ]; then
+        log_info "  ✅ GET /clients returns $count items (total: $total)"
     else
-        log_error "  ❌ GET /clients endpoint not available"
-        return 1
+        log_error "  ❌ GET /clients returns invalid response"
+        failed=$((failed + 1))
     fi
+
+    # Test pagination
+    local page2=$(curl -s "https://be.s60dev.cz/clients?page=2&limit=10" | jq '.data | length')
+    if [ "$page2" -eq 10 ]; then
+        log_info "  ✅ GET /clients?page=2&limit=10 respects pagination"
+    else
+        log_error "  ❌ GET /clients?page=2&limit=10 returned $page2 items"
+        failed=$((failed + 1))
+    fi
+
+    # Test search
+    local search_results=$(curl -s "https://be.s60dev.cz/clients?search=test" | jq '.data | length')
+    if [ "$search_results" -ge 0 ]; then
+        log_info "  ✅ GET /clients?search=test returns $search_results results"
+    else
+        log_error "  ❌ GET /clients?search=test failed"
+        failed=$((failed + 1))
+    fi
+
+    [ $failed -eq 0 ] && return 0 || return 1
 }
 
 # ============================================
