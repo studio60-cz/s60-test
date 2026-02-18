@@ -54,22 +54,22 @@ function test_venom_e2e() {
             test_file=""
             ;;
         "navigation")
-            test_file="tests/e2e/navigation.spec.ts"
+            test_file="e2e/navigation.spec.ts"
             ;;
         "applications")
-            test_file="tests/e2e/applications-*.spec.ts"
+            test_file="e2e/applications-*.spec.ts"
             ;;
         "filters")
-            test_file="tests/e2e/applications-filters.spec.ts"
+            test_file="e2e/applications-filters.spec.ts"
             ;;
         "crud")
-            test_file="tests/e2e/crud-operations.spec.ts"
+            test_file="e2e/crud-operations.spec.ts"
             ;;
         "errors")
-            test_file="tests/e2e/error-handling.spec.ts"
+            test_file="e2e/error-handling.spec.ts"
             ;;
         *)
-            test_file="tests/e2e/${suite}.spec.ts"
+            test_file="e2e/${suite}.spec.ts"
             ;;
     esac
 
@@ -158,8 +158,8 @@ function test_badwolf_smoke() {
 
     local failed=0
 
-    # Test /applications
-    if curl -sf https://be.s60dev.cz/applications | jq -e 'type == "array"' > /dev/null; then
+    # Test /applications (paginated response with .data)
+    if curl -sf https://be.s60dev.cz/applications | jq -e '.data | type == "array"' > /dev/null; then
         log_info "  ✅ GET /applications"
     else
         log_error "  ❌ GET /applications"
@@ -204,8 +204,8 @@ function test_badwolf_applications() {
 
     local failed=0
 
-    # Test list endpoint
-    local count=$(curl -s https://be.s60dev.cz/applications | jq 'length')
+    # Test list endpoint (paginated response)
+    local count=$(curl -s https://be.s60dev.cz/applications | jq '.data | length')
     if [ "$count" -gt 0 ]; then
         log_info "  ✅ GET /applications returns $count items"
     else
@@ -213,8 +213,8 @@ function test_badwolf_applications() {
         failed=$((failed + 1))
     fi
 
-    # Test with filters
-    local filtered=$(curl -s "https://be.s60dev.cz/applications?limit=5" | jq 'length')
+    # Test with filters (paginated response)
+    local filtered=$(curl -s "https://be.s60dev.cz/applications?limit=5" | jq '.data | length')
     if [ "$filtered" -le 5 ]; then
         log_info "  ✅ GET /applications?limit=5 respects limit"
     else
@@ -223,7 +223,7 @@ function test_badwolf_applications() {
     fi
 
     # Test detail endpoint
-    local first_id=$(curl -s https://be.s60dev.cz/applications | jq -r '.[0].id')
+    local first_id=$(curl -s https://be.s60dev.cz/applications | jq -r '.data[0].id')
     if curl -sf "https://be.s60dev.cz/applications/$first_id" | jq -e '.id' > /dev/null; then
         log_info "  ✅ GET /applications/:id returns detail"
     else
