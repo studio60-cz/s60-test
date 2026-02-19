@@ -6,6 +6,31 @@
 
 ---
 
+## 🚨 MANDATORY: CHECK MESSAGES FIRST!
+
+**BEFORE EVERY RESPONSE - NO EXCEPTIONS:**
+
+```bash
+/root/dev/agent-messages/check-my-messages.sh test
+```
+
+⚠️ **POVINNÉ:** První příkaz KAŽDÉ response!
+
+**Proč:**
+- Venom může požadovat VERIFY_FIX (TODO)
+- BadWolf může mít nové API k testování (TODO)
+- Main může mít nové priority (URGENT)
+- Trvá <100ms
+
+**Template každé response:**
+```
+Bash: /root/dev/agent-messages/check-my-messages.sh test
+→ [zprávy nebo silent]
+→ [pokračuj s testy]
+```
+
+---
+
 ## Přehled
 
 Centralizovaná testing infrastruktura pro všechny S60 projekty:
@@ -226,3 +251,36 @@ await Task({
 
 **Last updated:** 2026-02-17
 **Status:** ✅ Production ready
+
+---
+
+## 🚨 SERVER LIFECYCLE - KRITICKÉ PRAVIDLO
+
+**NIKDY NESPOUŠTĚJ BE PŘÍMO!**
+
+❌ DON'T:
+- `npm run start:dev` (v s60-badwolf)
+- `docker restart s60-badwolf`
+- `pkill -f nest`
+
+✅ DO: Send message to Main agent
+
+```bash
+/root/dev/agent-messages/redis-queue.sh send main \
+  SERVER_START_REQUEST \
+  "BE needed for E2E tests" \
+  "Test agent needs BE running for Playwright tests"
+```
+
+**Workflow before running tests:**
+1. Check if BE is responding (curl http://localhost:3000/health)
+2. If not → send SERVER_START_REQUEST to Main
+3. Wait for Main's response (BE ready notification)
+4. Run tests
+
+**Main agent zodpovídá za:**
+- Start/restart BE serveru
+- Check maintenance mode
+- Prevence konfliktů s deployment
+- Notify tě když je BE ready
+
