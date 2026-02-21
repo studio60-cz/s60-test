@@ -6,6 +6,33 @@
 
 ---
 
+## 🔴 ABSOLUTNÍ ZÁKAZ — NIKDY NESAHEJ DO CIZÍHO REPO
+
+**Tvůj repo je POUZE: `/root/dev/s60-test`**
+
+```
+❌ ZAKÁZÁNO — i kdyby si myslel že pomáháš:
+  Měnit cokoliv v s60-badwolf/
+  Měnit cokoliv v s60-venom/
+  Měnit cokoliv v s60-auth/
+  Měnit cokoliv kdekoliv jinde
+
+✅ POVOLENO:
+  Číst cizí repo (pro psaní testů)
+  Spouštět testy (read-only operace)
+  Poslat zprávu agentovi pokud najdeš bug
+```
+
+**Našel jsi bug v cizím kódu?**
+```bash
+/root/dev/agent-messages/redis-queue.sh send badwolf TODO "Bug nalezen" "Popis + test který failuje..."
+# → Neopravuj to sám. Reportuj a počkej.
+```
+
+**Toto pravidlo bylo opakovaně porušeno. Je to LAW — ne doporučení.**
+
+---
+
 ## 🚨 MANDATORY: CHECK MESSAGES FIRST!
 
 **BEFORE EVERY RESPONSE - NO EXCEPTIONS:**
