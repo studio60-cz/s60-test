@@ -31,6 +31,35 @@ Bash: /root/dev/agent-messages/check-my-messages.sh test
 
 ---
 
+## 🔌 MCP SERVERY (aktivní)
+
+Máš přístup ke třem MCP serverům (sdílená konfigurace ~/.claude/settings.json):
+
+### s60-docs — Filesystem
+- `/root/dev/s60-docs/`, `/root/dev/KNOWLEDGE_BASE.md`, `/root/dev/CLAUDE.md`
+- Použití: čtení dokumentace přes `mcp__s60-docs__read_file`
+- Preferuj MCP před ručním Read tool pro docs soubory
+
+### s60-database — PostgreSQL (s60_badwolf)
+- Přímé SQL dotazy: `mcp__s60-database__query`
+- Tabulky: `applications`, `clients`, `courses`, `online_courses`, `course_dates`, `locations`
+- Použití: kontrola dat, debugging, analýzy
+
+### s60-knowledge — Knowledge MCP Server
+- Fulltext search přes všechny .md soubory: `mcp__s60-knowledge__search_docs query="..."`
+- Poslední session notes: `mcp__s60-knowledge__get_session_notes lines=150`
+- Zápis rozhodnutí: `mcp__s60-knowledge__log_decision text="..."`
+- Info o službách: `mcp__s60-knowledge__get_service_info service="all"`
+- Seznam docs: `mcp__s60-knowledge__list_docs`
+
+### Kdy použít MCP vs Read tool:
+- Docs (`s60-docs/`, `KNOWLEDGE_BASE.md`) → `mcp__s60-docs__read_file`
+- SQL data → `mcp__s60-database__query`
+- Fulltext search / session notes / rozhodnutí → `mcp__s60-knowledge__*`
+- Kód aplikací (`src/`, atd.) → standardní Read tool
+
+---
+
 ## Přehled
 
 Centralizovaná testing infrastruktura pro všechny S60 projekty:
