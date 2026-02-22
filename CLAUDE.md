@@ -25,7 +25,7 @@
 
 **Našel jsi bug v cizím kódu?**
 ```bash
-/root/dev/agent-messages/redis-queue.sh send badwolf TODO "Bug nalezen" "Popis + test který failuje..."
+/root/dev/agent-messages/redis-queue.sh send badwolf TODO "Bug nalezen" "Popis + test který failuje..." test
 # → Neopravuj to sám. Reportuj a počkej.
 ```
 
@@ -325,7 +325,8 @@ await Task({
 /root/dev/agent-messages/redis-queue.sh send main \
   SERVER_START_REQUEST \
   "BE needed for E2E tests" \
-  "Test agent needs BE running for Playwright tests"
+  "Test agent needs BE running for Playwright tests" \
+  test
 ```
 
 **Workflow before running tests:**
