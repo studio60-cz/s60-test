@@ -340,3 +340,31 @@ await Task({
 - Prevence konfliktů s deployment
 - Notify tě když je BE ready
 
+
+---
+
+## 📋 Freelo — Správné API URL
+
+**Base URL:** `https://api.freelo.io`
+**Auth:** Basic Auth — `libor.webster@studio60.cz` + API key z `.env` (FREELO_API_KEY)
+**Projekt S60 Universe ID:** `572422`
+
+**Tasklists:**
+- Backlog: `1761121` | To Do: `1761122` | In Progress: `1761123` | Done: `1761124`
+
+**⚠️ Časté chyby:**
+```
+❌ POST /v1/tasklist/{id}/tasks                              → 404
+✅ POST /v1/project/572422/tasklist/{tasklistId}/tasks       → správně
+```
+
+**Vytvoření tasku:**
+```bash
+curl -s -u "libor.webster@studio60.cz:$FREELO_API_KEY" \
+  -X POST "https://api.freelo.io/v1/project/572422/tasklist/1761122/tasks" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "[PREFIX] Název tasku"}'
+```
+
+**Detaily:** `/root/dev/FREELO-GUIDE.md`
+
