@@ -343,28 +343,23 @@ await Task({
 
 ---
 
-## 📋 Freelo — Správné API URL
+## 📋 Freelo — Správné použití
 
-**Base URL:** `https://api.freelo.io`
-**Auth:** Basic Auth — `libor.webster@studio60.cz` + API key z `.env` (FREELO_API_KEY)
-**Projekt S60 Universe ID:** `572422`
+**NIKDY nevolej Freelo API přímo. Vždy přes script:**
 
-**Tasklists:**
-- Backlog: `1761121` | To Do: `1761122` | In Progress: `1761123` | Done: `1761124`
-
-**⚠️ Časté chyby:**
-```
-❌ POST /v1/tasklist/{id}/tasks                              → 404
-✅ POST /v1/project/572422/tasklist/{tasklistId}/tasks       → správně
-```
-
-**Vytvoření tasku:**
 ```bash
-curl -s -u "libor.webster@studio60.cz:$FREELO_API_KEY" \
-  -X POST "https://api.freelo.io/v1/project/572422/tasklist/1761122/tasks" \
-  -H "Content-Type: application/json" \
-  -d '{"name": "[PREFIX] Název tasku"}'
+# READ (přímé, výsledek ihned):
+/root/dev/agent-messages/freelo.sh list todo
+/root/dev/agent-messages/freelo.sh list backlog
+/root/dev/agent-messages/freelo.sh get <task_id>
+
+# WRITE (přes frontu, worker zpracuje):
+/root/dev/agent-messages/freelo.sh create   --list todo   --name "[PREFIX] Název"   --description "Popis..."   --from <agent>
+
+/root/dev/agent-messages/freelo.sh finish <task_id> <agent>
+/root/dev/agent-messages/freelo.sh move <task_id> inprogress <agent>
 ```
 
-**Detaily:** `/root/dev/FREELO-GUIDE.md`
-
+**Sloupce:** backlog (1761121) | todo (1761122) | inprogress (1761123) | done (1761124)
+**Prefixy:** [BW] [VENOM] [AUTH] [WP] [KVT] [LEARNIA] [INFRA] [N8N] [EDGE] [BILLIT]
+**Docs:** `/root/dev/agent-messages/FREELO_QUEUE.md`
