@@ -157,7 +157,7 @@ tests:
   - id: mail-smoke-health
     service: s60mail
     type: smoke
-    env: all
+    env: [hub, prod]   # NOT on dev (Cerebro) — deployed only on hub + prod
     priority: P0
     tags: [health, mail]
     description: "GET /health → 200"
@@ -259,3 +259,44 @@ tests:
     tags: [venom, playwright, errors]
     description: "Error states — 404, server error, network failure"
     suite_file: "suites/e2e/venom/error-handling.spec.ts"
+
+  # ============================================================
+  # REGRESSION — Applications (BadWolf)
+  # ============================================================
+
+  - id: reg-app-missing-location-id
+    service: s60badwolf
+    type: regression
+    env: dev
+    priority: P1
+    tags: [badwolf, applications, regression, locationId]
+    description: "GET /applications nesmí vracet 500 při chybějícím courseDate.locationId"
+    suite_file: "suites/regression/applications/missing-location-id.sh"
+    bug_ref: "Known bug — graceful null locationId handling"
+    trigger_on: [ApplicationsModule, CourseDatesModule]
+
+  - id: reg-app-client-name-reference
+    service: s60badwolf
+    type: regression
+    env: dev
+    priority: P1
+    tags: [badwolf, applications, regression, client]
+    description: "GET /applications — embedded client musí mít identifikovatelné pole (name/firstName)"
+    suite_file: "suites/regression/applications/client-name-reference.sh"
+    bug_ref: "commit fb6305f — fix: correct client.name reference in EditApplicationForm"
+    trigger_on: [ApplicationsModule, ClientsModule]
+
+  # ============================================================
+  # REGRESSION — Auth (S60Auth)
+  # ============================================================
+
+  - id: reg-auth-bad-token-rejection
+    service: s60auth
+    type: regression
+    env: all
+    priority: P0
+    tags: [auth, forwardauth, regression, security]
+    description: "ForwardAuth MUSÍ odmítnout všechny neplatné tokeny (malformed, expired, wrong sig)"
+    suite_file: "suites/regression/auth/bad-token-rejection.sh"
+    bug_ref: "Security invariant — ForwardAuth must never pass invalid tokens"
+    trigger_on: [S60Auth, ForwardAuth]
