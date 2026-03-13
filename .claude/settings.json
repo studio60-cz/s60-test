@@ -1,0 +1,24 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/root/dev/agent-session-start-generic.sh test s60"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/root/dev/agent-messages/check-my-messages.sh test 2>/dev/null || true"
+          }
+        ]
+      }
+    ]
+  }
+}

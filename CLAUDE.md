@@ -1,5 +1,7 @@
 # s60-test — Test Infrastructure
 
+> **Pokud nevíš kdo je kdo →** `/root/dev/catalog/agents/AGENT_MAP.md` (source of truth pro všechny agenty)
+
 **Agent:** `test`
 **Repo:** `/root/projects/s60/s60-test` (alias `/root/dev/s60-test`)
 **Role:** Centralizované testování celého S60 ekosystému — E2E, API, integration, security

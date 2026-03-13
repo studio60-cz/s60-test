@@ -1,0 +1,261 @@
+# S60 Test Catalog
+# Format: id, service, type, env, priority, tags
+# Types: smoke | integration | e2e
+# Envs: dev | hub | prod | all
+# Priority: P0 (blocking deploy) | P1 (critical) | P2 (important) | P3 (nice-to-have)
+
+version: "1.0"
+updated: "2026-03-13"
+
+tests:
+
+  # ============================================================
+  # SMOKE — S60Auth
+  # ============================================================
+
+  - id: auth-smoke-health
+    service: s60auth
+    type: smoke
+    env: all
+    priority: P0
+    tags: [health, auth]
+    description: "GET /health → 200"
+    endpoint: "https://auth.{domain}/health"
+    expect:
+      status: 200
+
+  - id: auth-smoke-jwks
+    service: s60auth
+    type: smoke
+    env: all
+    priority: P0
+    tags: [auth, tokens]
+    description: "GET /.well-known/jwks.json → valid JWKS"
+    endpoint: "https://auth.{domain}/.well-known/jwks.json"
+    expect:
+      status: 200
+      body_contains: "keys"
+
+  - id: auth-smoke-oidc-config
+    service: s60auth
+    type: smoke
+    env: all
+    priority: P1
+    tags: [auth, oidc]
+    description: "GET /.well-known/openid-configuration → valid OIDC config"
+    endpoint: "https://auth.{domain}/.well-known/openid-configuration"
+    expect:
+      status: 200
+      body_contains: "issuer"
+
+  - id: auth-smoke-token-validate
+    service: s60auth
+    type: smoke
+    env: all
+    priority: P0
+    tags: [auth, forwardauth]
+    description: "ForwardAuth rejects missing token → 401"
+    endpoint: "https://be.{domain}/applications"
+    headers: {}
+    expect:
+      status: 401
+
+  # ============================================================
+  # SMOKE — S60BadWolf
+  # ============================================================
+
+  - id: badwolf-smoke-health
+    service: s60badwolf
+    type: smoke
+    env: all
+    priority: P0
+    tags: [health, badwolf]
+    description: "GET /health → 200"
+    endpoint: "https://be.{domain}/health"
+    expect:
+      status: 200
+
+  - id: badwolf-smoke-applications
+    service: s60badwolf
+    type: smoke
+    env: all
+    priority: P0
+    tags: [badwolf, applications]
+    description: "GET /applications (authed) → 200 + .data array"
+    endpoint: "https://be.{domain}/applications"
+    auth: required
+    expect:
+      status: 200
+      body_contains: "data"
+
+  - id: badwolf-smoke-courses
+    service: s60badwolf
+    type: smoke
+    env: all
+    priority: P1
+    tags: [badwolf, courses]
+    description: "GET /courses (public) → 200 + array"
+    endpoint: "https://be.{domain}/courses"
+    expect:
+      status: 200
+
+  - id: badwolf-smoke-locations
+    service: s60badwolf
+    type: smoke
+    env: all
+    priority: P1
+    tags: [badwolf, locations]
+    description: "GET /locations (public) → 200 + array"
+    endpoint: "https://be.{domain}/locations"
+    expect:
+      status: 200
+
+  - id: badwolf-smoke-clients
+    service: s60badwolf
+    type: smoke
+    env: all
+    priority: P1
+    tags: [badwolf, clients]
+    description: "GET /clients (authed) → 200 + .data array"
+    endpoint: "https://be.{domain}/clients"
+    auth: required
+    expect:
+      status: 200
+      body_contains: "data"
+
+  # ============================================================
+  # SMOKE — Billit
+  # ============================================================
+
+  - id: billit-smoke-health
+    service: billit
+    type: smoke
+    env: all
+    priority: P0
+    tags: [health, billit]
+    description: "GET /health → 200"
+    endpoint: "https://billit.{domain}/health"
+    expect:
+      status: 200
+
+  - id: billit-smoke-invoices
+    service: billit
+    type: smoke
+    env: all
+    priority: P1
+    tags: [billit, invoices]
+    description: "GET /api/invoices (authed) → 200"
+    endpoint: "https://billit.{domain}/api/invoices"
+    auth: required
+    expect:
+      status: 200
+
+  # ============================================================
+  # SMOKE — S60Mail
+  # ============================================================
+
+  - id: mail-smoke-health
+    service: s60mail
+    type: smoke
+    env: all
+    priority: P0
+    tags: [health, mail]
+    description: "GET /health → 200"
+    endpoint: "https://mail.{domain}/health"
+    expect:
+      status: 200
+
+  # ============================================================
+  # SMOKE — S60Venom (frontend)
+  # ============================================================
+
+  - id: venom-smoke-index
+    service: s60venom
+    type: smoke
+    env: all
+    priority: P0
+    tags: [health, venom, frontend]
+    description: "GET / (venom) → 200 OK"
+    endpoint: "https://venom.{domain}/"
+    expect:
+      status: 200
+
+  # ============================================================
+  # INTEGRATION — BadWolf
+  # ============================================================
+
+  - id: badwolf-int-application-crud
+    service: s60badwolf
+    type: integration
+    env: dev
+    priority: P1
+    tags: [badwolf, applications, crud]
+    description: "CREATE → GET → UPDATE → DELETE application"
+    suite_file: "suites/integration/badwolf-applications.sh"
+
+  - id: badwolf-int-auth-forwardauth
+    service: s60badwolf
+    type: integration
+    env: dev
+    priority: P0
+    tags: [badwolf, auth, forwardauth]
+    description: "Valid token passes ForwardAuth, headers injected correctly"
+    suite_file: "suites/integration/auth-forwardauth.sh"
+
+  - id: badwolf-int-course-dates
+    service: s60badwolf
+    type: integration
+    env: dev
+    priority: P1
+    tags: [badwolf, courses, course-dates]
+    description: "GET /course-dates with filters → correct results"
+    suite_file: "suites/integration/badwolf-course-dates.sh"
+
+  # ============================================================
+  # E2E — Venom (Playwright)
+  # ============================================================
+
+  - id: venom-e2e-navigation
+    service: s60venom
+    type: e2e
+    env: dev
+    priority: P1
+    tags: [venom, playwright, navigation]
+    description: "Navigace mezi sekcemi (Applications, Courses, Clients...)"
+    suite_file: "suites/e2e/venom/navigation.spec.ts"
+
+  - id: venom-e2e-applications-filters
+    service: s60venom
+    type: e2e
+    env: dev
+    priority: P1
+    tags: [venom, playwright, applications, filters]
+    description: "Filtry přihlášek — kurz, termín, stav"
+    suite_file: "suites/e2e/venom/applications-filters.spec.ts"
+
+  - id: venom-e2e-applications-detail
+    service: s60venom
+    type: e2e
+    env: dev
+    priority: P1
+    tags: [venom, playwright, applications]
+    description: "Detail přihlášky — zobrazení, editace"
+    suite_file: "suites/e2e/venom/applications-detail.spec.ts"
+
+  - id: venom-e2e-crud
+    service: s60venom
+    type: e2e
+    env: dev
+    priority: P2
+    tags: [venom, playwright, crud]
+    description: "CRUD operace přes UI"
+    suite_file: "suites/e2e/venom/crud-operations.spec.ts"
+
+  - id: venom-e2e-error-handling
+    service: s60venom
+    type: e2e
+    env: dev
+    priority: P2
+    tags: [venom, playwright, errors]
+    description: "Error states — 404, server error, network failure"
+    suite_file: "suites/e2e/venom/error-handling.spec.ts"
