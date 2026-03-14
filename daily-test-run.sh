@@ -96,6 +96,7 @@ if curl -sk -o /dev/null -w "%{http_code}" --max-time 3 "https://be.s60dev.cz/he
   run_suite "Integration: Auth ForwardAuth" "bash /root/dev/s60-test/suites/integration/auth-forwardauth.sh"
   run_suite "Integration: BadWolf Applications" "bash /root/dev/s60-test/suites/integration/badwolf-applications.sh"
   run_suite "Integration: S60Auth" "bash /root/dev/s60-test/suites/integration/s60auth.sh"
+  run_suite "Integration: S60Mail" "bash /root/dev/s60-test/suites/integration/s60mail.sh"
 else
   log "${YELLOW}  ⏭ Integration tests skipped — BE not reachable${NC}"
   TOTAL_SKIP=$((TOTAL_SKIP + 3))
