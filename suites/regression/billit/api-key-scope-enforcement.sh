@@ -7,6 +7,14 @@
 # Fix: ApiKeyScopeGuard jako globální APP_GUARD + @RequireScope() dekorátor
 # Commit: 070f0d3
 #
+# FIX 2 (commit e059878):
+#   request.apiKeyPermissions === undefined byl interpretován jako JWT auth.
+#   Fix: kontroluje Authorization header — ApiKey prefix → deny default.
+#
+# URL FIX: Nginx mapuje /api/ → billit-api container.
+#   Bez /api/ prefixu zasáhne React SPA → 200 (index.html) nebo 405 (POST).
+#   Správná base URL: https://billit.s60hub.cz/api  (BILLIT_TEST_API_BASE_URL_HUB)
+#
 # Test scénáře (dle specifikace billit agenta):
 #   1. API klíč bez scopů       → GET /invoices → 403
 #   2. API klíč s read:invoices → GET /invoices → 200
@@ -25,7 +33,6 @@
 
 set -uo pipefail
 
-BILLIT_URL=${BILLIT_URL:-"https://billit.s60dev.cz"}
 PASS=0; FAIL=0; SKIP=0
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
 
@@ -35,11 +42,16 @@ if [ -f "/root/dev/.env" ]; then
   TEST_API_KEY_READ_INVOICES=${TEST_API_KEY_READ_INVOICES:-$(grep "^BILLIT_TEST_API_KEY_READ_INVOICES=" /root/dev/.env 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "")}
   TEST_API_KEY_WRITE_INVOICES=${TEST_API_KEY_WRITE_INVOICES:-$(grep "^BILLIT_TEST_API_KEY_WRITE_INVOICES=" /root/dev/.env 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "")}
   TEST_JWT_TOKEN=${TEST_JWT_TOKEN:-$(grep "^BILLIT_TEST_JWT_TOKEN=" /root/dev/.env 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "")}
-  TEST_BILLIT_SLUG=${TEST_BILLIT_SLUG:-$(grep "^BILLIT_TEST_SLUG=" /root/dev/.env 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "test-tenant")}
+  TEST_BILLIT_SLUG=${TEST_BILLIT_SLUG:-$(grep "^BILLIT_TEST_SLUG=" /root/dev/.env 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "s60")}
+  # Base URL: env var → BILLIT_URL → autodetect dev
+  _ENV_BASE_URL=$(grep "^BILLIT_TEST_API_BASE_URL_HUB=" /root/dev/.env 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "")
+  _DEV_BASE_URL=$(grep "^BILLIT_TEST_API_BASE_URL_DEV=" /root/dev/.env 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "")
 fi
 
-TEST_BILLIT_SLUG=${TEST_BILLIT_SLUG:-"test-tenant"}
-INVOICES_URL="$BILLIT_URL/v1/accounts/${TEST_BILLIT_SLUG}/invoices"
+# Priorita: explicitní BILLIT_URL → HUB env var → DEV env var → fallback
+BILLIT_API_BASE=${BILLIT_URL:-${_ENV_BASE_URL:-${_DEV_BASE_URL:-"https://billit.s60dev.cz/api"}}}
+TEST_BILLIT_SLUG=${TEST_BILLIT_SLUG:-"s60"}
+INVOICES_URL="${BILLIT_API_BASE}/v1/accounts/${TEST_BILLIT_SLUG}/invoices"
 
 assert_http() {
   local id=$1 desc=$2 actual=$3 expected=$4
@@ -67,16 +79,18 @@ assert_body() {
 }
 
 echo -e "\n${YELLOW}=== REGRESSION: billit/api-key-scope-enforcement (F-162) ===${NC}"
-echo -e "  Bug: API key scopes v DB nebyly enforced — jakýkoliv klíč mohl cokoliv\n"
+echo -e "  Bug: API key scopes v DB nebyly enforced — jakýkoliv klíč mohl cokoliv"
+echo -e "  API base: $BILLIT_API_BASE\n"
 
-# Zkontroluj dostupnost
-http_code=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 5 "$BILLIT_URL/health" 2>/dev/null || echo "000")
+# Zkontroluj dostupnost — health je bez /api/ prefixu (statický endpoint)
+_HEALTH_BASE=$(echo "$BILLIT_API_BASE" | sed 's|/api$||')
+http_code=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 5 "${_HEALTH_BASE}/health" 2>/dev/null || echo "000")
 if [ "$http_code" = "000" ]; then
-  echo -e "  ${YELLOW}⏭ SKIP${NC} Billit není dostupný na $BILLIT_URL"
+  echo -e "  ${YELLOW}⏭ SKIP${NC} Billit není dostupný na ${_HEALTH_BASE}/health"
   exit 0
 fi
 if [ "$http_code" != "200" ]; then
-  echo -e "  ${YELLOW}⏭ SKIP${NC} Billit health → $http_code"
+  echo -e "  ${YELLOW}⏭ SKIP${NC} Billit health → $http_code (${_HEALTH_BASE}/health)"
   exit 0
 fi
 
