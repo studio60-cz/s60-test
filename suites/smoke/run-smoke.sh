@@ -9,12 +9,22 @@ ENV=${1:-dev}
 SERVICE=${2:-all}
 
 # Domain mapping
+# NOTE: BadWolf subdomena se liší podle prostředí:
+#   dev:  be.s60dev.cz   (legacy, zachováno)
+#   hub:  be.s60hub.cz
+#   prod: api.studio60.cz (DNS korekce 2026-03-12, be.studio60.cz = starý Merlin)
 case "$ENV" in
-  dev)   DOMAIN="s60dev.cz" ;;
-  hub)   DOMAIN="s60hub.cz" ;;
-  prod)  DOMAIN="studio60.cz" ;;
+  dev)   DOMAIN="s60dev.cz";  BE_SUBDOMAIN="be" ;;
+  hub)   DOMAIN="s60hub.cz";  BE_SUBDOMAIN="be" ;;
+  prod)  DOMAIN="studio60.cz"; BE_SUBDOMAIN="api" ;;
   *)     echo "Unknown env: $ENV (dev|hub|prod)"; exit 1 ;;
 esac
+
+# Mail je internal service (port 3010, bez nginx na hub/prod)
+# → smoke jen na dev (kde může být nginx exposed), hub/prod se testuje přes Tailscale
+MAIL_TAILSCALE_HUB="100.68.138.14"   # hub-alfa Tailscale IP
+MAIL_TAILSCALE_PROD="100.78.87.88"   # prod-alfa Tailscale IP
+MAIL_PORT="3010"
 
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 RESULTS_FILE="/tmp/smoke-${ENV}-${TIMESTAMP}.json"
@@ -73,15 +83,15 @@ if [ "$SERVICE" = "all" ] || [ "$SERVICE" = "auth" ]; then
   check "auth-smoke-health"     "GET /api/health"               "https://auth.${DOMAIN}/api/health"                200 "S60-Auth"
   check "auth-smoke-jwks"       "GET /api/auth/oauth/jwks"      "https://auth.${DOMAIN}/api/auth/oauth/jwks"       200 "keys"
   check "auth-smoke-oidc"       "GET /openid-configuration"     "https://auth.${DOMAIN}/.well-known/openid-configuration" 200 "issuer"
-  check "auth-smoke-no-token"   "ForwardAuth rejects no token"  "https://be.${DOMAIN}/applications"                401
+  check "auth-smoke-no-token"   "ForwardAuth rejects no token"  "https://${BE_SUBDOMAIN}.${DOMAIN}/applications"   401
 fi
 
 # ============================================================
 if [ "$SERVICE" = "all" ] || [ "$SERVICE" = "badwolf" ]; then
-  echo -e "\n${YELLOW}-- S60BadWolf --${NC}"
-  check "badwolf-smoke-health"    "GET /health"      "https://be.${DOMAIN}/health"      200
-  check "badwolf-smoke-courses"   "GET /courses"     "https://be.${DOMAIN}/courses"     200
-  check "badwolf-smoke-locations" "GET /locations"   "https://be.${DOMAIN}/locations"   200
+  echo -e "\n${YELLOW}-- S60BadWolf (https://${BE_SUBDOMAIN}.${DOMAIN}) --${NC}"
+  check "badwolf-smoke-health"    "GET /health"      "https://${BE_SUBDOMAIN}.${DOMAIN}/health"      200
+  check "badwolf-smoke-courses"   "GET /courses"     "https://${BE_SUBDOMAIN}.${DOMAIN}/courses"     200
+  check "badwolf-smoke-locations" "GET /locations"   "https://${BE_SUBDOMAIN}.${DOMAIN}/locations"   200
 fi
 
 # ============================================================
@@ -102,25 +112,44 @@ fi
 # ============================================================
 if [ "$SERVICE" = "all" ] || [ "$SERVICE" = "billit" ]; then
   echo -e "\n${YELLOW}-- Billit --${NC}"
-  # Billit nemusí být na všech envs
-  http_code=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 5 "https://billit.${DOMAIN}/health" 2>/dev/null || echo "000")
+  # Billit nemusí být na všech envs; vždy HTTPS (301 = HTTP→HTTPS redirect = chyba v URL)
+  BILLIT_HEALTH_URL="https://billit.${DOMAIN}/health"
+  http_code=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 5 "$BILLIT_HEALTH_URL" 2>/dev/null || echo "000")
   if [ "$http_code" = "000" ]; then
     echo -e "  ${YELLOW}⏭ SKIP${NC} [billit-smoke-health] Not deployed on $ENV"
     SKIP=$((SKIP + 1))
+  elif [ "$http_code" = "301" ] || [ "$http_code" = "302" ]; then
+    echo -e "  ${RED}❌ FAIL${NC} [billit-smoke-health] $BILLIT_HEALTH_URL → HTTP $http_code (redirect — zkontroluj HTTPS config)"
+    FAIL=$((FAIL + 1))
+    RESULTS+=("{\"id\":\"billit-smoke-health\",\"status\":\"FAIL\",\"http_code\":\"$http_code\"}")
   else
-    check "billit-smoke-health"   "GET /health"   "https://billit.${DOMAIN}/health"   200
+    check "billit-smoke-health"   "GET /health"   "$BILLIT_HEALTH_URL"   200
   fi
 fi
 
 # ============================================================
 if [ "$SERVICE" = "all" ] || [ "$SERVICE" = "mail" ]; then
   echo -e "\n${YELLOW}-- S60Mail --${NC}"
-  http_code=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 5 "https://mail.${DOMAIN}/health" 2>/dev/null || echo "000")
+  # S60Mail je internal service (port 3010, bez nginx na hub/prod)
+  # dev: https://mail.s60dev.cz/health (nginx exposed)
+  # hub/prod: přes Tailscale IP:3010 (interní)
+  case "$ENV" in
+    dev)
+      MAIL_URL="https://mail.${DOMAIN}/health"
+      ;;
+    hub)
+      MAIL_URL="http://${MAIL_TAILSCALE_HUB}:${MAIL_PORT}/health"
+      ;;
+    prod)
+      MAIL_URL="http://${MAIL_TAILSCALE_PROD}:${MAIL_PORT}/health"
+      ;;
+  esac
+  http_code=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 5 "$MAIL_URL" 2>/dev/null || echo "000")
   if [ "$http_code" = "000" ]; then
-    echo -e "  ${YELLOW}⏭ SKIP${NC} [mail-smoke-health] Not deployed on $ENV"
+    echo -e "  ${YELLOW}⏭ SKIP${NC} [mail-smoke-health] Not reachable ($MAIL_URL) — not deployed or Tailscale down"
     SKIP=$((SKIP + 1))
   else
-    check "mail-smoke-health"   "GET /health"   "https://mail.${DOMAIN}/health"   200
+    check "mail-smoke-health"   "GET /health ($ENV)"   "$MAIL_URL"   200
   fi
 fi
 
