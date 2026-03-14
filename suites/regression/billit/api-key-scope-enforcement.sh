@@ -36,20 +36,40 @@ set -uo pipefail
 PASS=0; FAIL=0; SKIP=0
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
 
-# Načti credentials z .env pokud nejsou nastaveny
+# Načti credentials z .env
+# Priorita klíčů: env proměnná → .env hub vars → .env dev vars
+_e() { grep "^$1=" /root/dev/.env 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo ""; }
+
 if [ -f "/root/dev/.env" ]; then
-  TEST_API_KEY_NO_SCOPE=${TEST_API_KEY_NO_SCOPE:-$(grep "^BILLIT_TEST_API_KEY_NO_SCOPE=" /root/dev/.env 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "")}
-  TEST_API_KEY_READ_INVOICES=${TEST_API_KEY_READ_INVOICES:-$(grep "^BILLIT_TEST_API_KEY_READ_INVOICES=" /root/dev/.env 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "")}
-  TEST_API_KEY_WRITE_INVOICES=${TEST_API_KEY_WRITE_INVOICES:-$(grep "^BILLIT_TEST_API_KEY_WRITE_INVOICES=" /root/dev/.env 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "")}
-  TEST_JWT_TOKEN=${TEST_JWT_TOKEN:-$(grep "^BILLIT_TEST_JWT_TOKEN=" /root/dev/.env 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "")}
-  TEST_BILLIT_SLUG=${TEST_BILLIT_SLUG:-$(grep "^BILLIT_TEST_SLUG=" /root/dev/.env 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "s60")}
-  # Base URL: env var → BILLIT_URL → autodetect dev
-  _ENV_BASE_URL=$(grep "^BILLIT_TEST_API_BASE_URL_HUB=" /root/dev/.env 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "")
-  _DEV_BASE_URL=$(grep "^BILLIT_TEST_API_BASE_URL_DEV=" /root/dev/.env 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "")
+  # Base URL detekce — určí prostředí (hub vs dev)
+  _HUB_BASE_URL=$(_e BILLIT_TEST_API_BASE_URL_HUB)   # https://billit.s60hub.cz/api
+  _DEV_BASE_URL=$(_e BILLIT_TEST_API_BASE_URL_DEV)    # https://billit.s60dev.cz/api
+
+  # Pokud BILLIT_URL není nastaven explicitně, autodetect z URL
+  if [ -z "${BILLIT_URL:-}" ]; then
+    # Default: hub pokud je nastaven, jinak dev
+    BILLIT_URL="${_HUB_BASE_URL:-${_DEV_BASE_URL:-"https://billit.s60dev.cz/api"}}"
+  fi
+
+  # Vyber správné klíče podle prostředí (hub vs dev)
+  if echo "$BILLIT_URL" | grep -q "s60hub"; then
+    # HUB prostředí — použij BILLIT_TEST_HUB_* klíče
+    TEST_API_KEY_NO_SCOPE=${TEST_API_KEY_NO_SCOPE:-$(_e BILLIT_TEST_HUB_API_KEY_NO_SCOPE)}
+    TEST_API_KEY_READ_INVOICES=${TEST_API_KEY_READ_INVOICES:-$(_e BILLIT_TEST_HUB_API_KEY_READ_INVOICES)}
+    TEST_API_KEY_WRITE_INVOICES=${TEST_API_KEY_WRITE_INVOICES:-$(_e BILLIT_TEST_HUB_API_KEY_WRITE_INVOICES)}
+    TEST_BILLIT_SLUG=${TEST_BILLIT_SLUG:-$(_e BILLIT_TEST_HUB_SLUG)}
+    TEST_JWT_TOKEN=${TEST_JWT_TOKEN:-$(_e BILLIT_TEST_HUB_JWT_TOKEN)}
+  else
+    # DEV prostředí — použij BILLIT_TEST_* klíče
+    TEST_API_KEY_NO_SCOPE=${TEST_API_KEY_NO_SCOPE:-$(_e BILLIT_TEST_API_KEY_NO_SCOPE)}
+    TEST_API_KEY_READ_INVOICES=${TEST_API_KEY_READ_INVOICES:-$(_e BILLIT_TEST_API_KEY_READ_INVOICES)}
+    TEST_API_KEY_WRITE_INVOICES=${TEST_API_KEY_WRITE_INVOICES:-$(_e BILLIT_TEST_API_KEY_WRITE_INVOICES)}
+    TEST_BILLIT_SLUG=${TEST_BILLIT_SLUG:-$(_e BILLIT_TEST_SLUG)}
+    TEST_JWT_TOKEN=${TEST_JWT_TOKEN:-$(_e BILLIT_TEST_JWT_TOKEN)}
+  fi
 fi
 
-# Priorita: explicitní BILLIT_URL → HUB env var → DEV env var → fallback
-BILLIT_API_BASE=${BILLIT_URL:-${_ENV_BASE_URL:-${_DEV_BASE_URL:-"https://billit.s60dev.cz/api"}}}
+BILLIT_API_BASE="${BILLIT_URL:-"https://billit.s60dev.cz/api"}"
 TEST_BILLIT_SLUG=${TEST_BILLIT_SLUG:-"s60"}
 INVOICES_URL="${BILLIT_API_BASE}/v1/accounts/${TEST_BILLIT_SLUG}/invoices"
 
