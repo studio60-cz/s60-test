@@ -20,6 +20,7 @@
 set -uo pipefail
 
 BILLIT_URL=${BILLIT_URL:-"https://billit.s60dev.cz"}
+BILLIT_SLUG=${BILLIT_SLUG:-$(echo "$BILLIT_URL" | grep -q "hub" && echo "test" || echo "test-tenant")}
 PASS=0; FAIL=0
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
 
@@ -50,7 +51,7 @@ assert "reg-billit-rls-01" "GET /health → server naběhl (migration necrashla)
 # Test 2: SELECT na child tabulce bez tenant kontextu nesmí crashnout
 # invoice_lines endpoint (přes parent invoice) → nesmí vrátit 500
 code=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 5 \
-  "$BILLIT_URL/v1/accounts/test-tenant/invoices" \
+  "$BILLIT_URL/v1/accounts/${BILLIT_SLUG}/invoices" \
   -H "Authorization: Bearer invalid" 2>/dev/null || echo "000")
 
 # 401 = server funguje a autentizuje, 403 = OK, 500 = RLS crash
@@ -69,7 +70,7 @@ fi
 
 # Test 3: Podobně pro /orders endpoint (order_lines jsou child tabulka)
 code=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 5 \
-  "$BILLIT_URL/v1/accounts/test-tenant/orders" \
+  "$BILLIT_URL/v1/accounts/${BILLIT_SLUG}/orders" \
   -H "Authorization: Bearer invalid" 2>/dev/null || echo "000")
 
 if [ "$code" = "200" ] || [ "$code" = "401" ] || [ "$code" = "403" ] || [ "$code" = "404" ]; then

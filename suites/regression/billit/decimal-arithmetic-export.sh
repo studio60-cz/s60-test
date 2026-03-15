@@ -18,6 +18,7 @@
 set -uo pipefail
 
 BILLIT_URL=${BILLIT_URL:-"https://billit.s60dev.cz"}
+BILLIT_SLUG=${BILLIT_SLUG:-$(echo "$BILLIT_URL" | grep -q "hub" && echo "test" || echo "test-tenant")}
 PASS=0; FAIL=0
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
 
@@ -45,7 +46,7 @@ assert "reg-billit-dec-01" "GET /health → 200" "$http_code" "200"
 # Test 2: Export endpoint nesmí vrátit 500
 # /v1/accounts/:slug/exports (XML/CSV) — 401 bez tokenu = OK
 code=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 5 \
-  "$BILLIT_URL/v1/accounts/test-tenant/exports" \
+  "$BILLIT_URL/v1/accounts/${BILLIT_SLUG}/exports" \
   -H "Authorization: Bearer invalid" 2>/dev/null || echo "000")
 
 if [ "$code" = "200" ] || [ "$code" = "401" ] || [ "$code" = "403" ] || [ "$code" = "404" ]; then

@@ -17,6 +17,7 @@
 set -uo pipefail
 
 BILLIT_URL=${BILLIT_URL:-"https://billit.s60dev.cz"}
+BILLIT_SLUG=${BILLIT_SLUG:-$(echo "$BILLIT_URL" | grep -q "hub" && echo "test" || echo "test-tenant")}
 PASS=0; FAIL=0
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
 
@@ -45,7 +46,7 @@ assert "reg-billit-di-01" "GET /health → 200 (server naběhl)" "$http_code" "2
 # Test 2: GET /products nesmí vrátit 500 DI error
 # Bez tokenu očekáváme 401/403 — 500 = DI crash
 code=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 5 \
-  "$BILLIT_URL/v1/accounts/test-tenant/products" \
+  "$BILLIT_URL/v1/accounts/${BILLIT_SLUG}/products" \
   -H "Authorization: Bearer invalid" 2>/dev/null || echo "000")
 
 if [ "$code" = "200" ] || [ "$code" = "401" ] || [ "$code" = "403" ] || [ "$code" = "404" ]; then
@@ -56,7 +57,7 @@ elif [ "$code" = "500" ]; then
   FAIL=$((FAIL+1))
   /root/dev/agent-messages/redis-queue.sh send billit TODO \
     "REGRESSION: ProductsModule DI crash" \
-    "GET /v1/accounts/test-tenant/products vrátil 500 — regrese TenantUser DI bugu (commit 95b31fc)" test 2>/dev/null || true
+    "GET /v1/accounts/${BILLIT_SLUG}/products vrátil 500 — regrese TenantUser DI bugu (commit 95b31fc)" test 2>/dev/null || true
 elif [ "$code" = "000" ]; then
   echo -e "  ${YELLOW}⏭ SKIP${NC} [reg-billit-di-02] /products endpoint nedostupný"
 else
