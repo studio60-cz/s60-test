@@ -1,33 +1,66 @@
 # Test — aktuální stav
 
-## Poslední run: 2026-03-15 05:13 UTC
+## Poslední run: 2026-03-15 (daily cron)
 
-### Smoke tests (dev): 13/15 PASS
-- ❌ `billit-smoke-health` — Billit dev vrací HTTP 500 (was OK last run)
-- ❌ `mail-smoke-health` — S60Mail vrací HTTP 502 (service down)
-- ✅ auth (4/4), badwolf (3/3), venom (1/1), pulse (5/5)
+### Coverage per služba
 
-### Regression: billit/api-key-scope-enforcement (HUB): 0/4 PASS, 4 FAIL, 2 SKIP
-- ❌ ALL API key tests return 401 — keys not recognized on hub
-- Scénáře 1-4: 401 místo expected 403/200/403/201
-- Scénář 5: SKIP (no JWT token configured)
-- Scénář 6: 401 místo 403
-- **Root cause:** API key test data likely not inserted into s60_billit_hub DB
-- **Reportováno billit agentovi** s detaily
+| Služba | Smoke | Integration | Regression | E2E | Pokrytí |
+|--------|-------|-------------|------------|-----|---------|
+| **S60Auth** | ✅ dev/hub/prod | ✅ 2 suites | ✅ 4 testy | ❌ | Dobrá |
+| **S60BadWolf** | ✅ dev/hub/prod | ✅ 1 suite | ✅ 2 testy | ❌ | Dobrá |
+| **Billit** | ✅ dev/hub/prod | ❌ | ✅ 4 testy | ❌ | Střední |
+| **S60Mail** | ✅ dev | ✅ 1 suite | ❌ | ❌ | Střední |
+| **S60Venom** | ✅ dev/hub/prod | ❌ | ❌ | ❌ | Slabá |
+| **S60Pulse** | ✅ dev/hub/prod | ❌ | ❌ | ❌ | Slabá |
+| **Learnia** | ❌ | ❌ | ✅ 1 test | ❌ | Slabá |
+| **S60Nexus** | ❌ | ❌ | ❌ | ❌ | Žádná |
+| **KVT** | ❌ | ❌ | ❌ | ❌ | Žádná |
+| **NoGames** | ❌ | ❌ | ❌ | ❌ | Žádná |
+| **Moodle** | ❌ | ❌ | ❌ | ❌ | Žádná |
+| **n8n** | ❌ | ❌ | ❌ | ❌ | Žádná |
+| **SSO Portál** | ❌ | ❌ | ❌ | ❌ | Žádná |
 
-### Integration tests (dev): 35/35 PASS, 12 SKIP (unchanged)
+**Pokrytí: 6/13 služeb (46%) — 17 testových souborů**
 
-### Previous regression (dev): 23/28 PASS, 5 FAIL, 6 SKIP (unchanged)
+---
 
-## Celkový souhrn
-- **Smoke:** 13/15 PASS (86.7%)
-- **Regression F-162 HUB:** 0/4 PASS — blocked on test data
-- **Integration:** 35/35 PASS
+### Výsledky posledního daily runu (2026-03-14)
 
-## Známé problémy
-- S60Mail service down na dev (HTTP 502) — persistent
-- Billit dev health returning 500 (NEW — was 200 last run)
-- Billit HUB: API key test data missing/invalid → all F-162 tests fail with 401
-- Billit dev /invoices endpoint vrací 404 (not deployed)
-- Learnia: uppercase course codes v DB
-- TEST_TOKEN not configured → 12 auth'd tests skipped
+| Suite | PASS | FAIL | SKIP | Status |
+|-------|------|------|------|--------|
+| Smoke DEV | ~8 | 6 | 0 | FAIL — auth 502 (lokální PG) |
+| Smoke HUB | ~6 | 2 | 0 | FAIL — badwolf courses 500 |
+| Smoke PROD | ~4 | 3 | 3 | FAIL — not deployed |
+| Integration: ForwardAuth | 5 | 3 | 0 | FAIL — auth down |
+| Integration: BadWolf Apps | 2 | 0 | 0 | ✅ PASS |
+| Integration: S60Auth | 0 | 19 | 0 | FAIL — auth down |
+| Regression: applications | 0 | 0 | 5 | SKIP — no token |
+| Regression: auth | 5 | 3 | 0 | FAIL — auth down |
+| Regression: billit | 8 | 4 | 2 | PARTIAL |
+| Regression: learnia | 0 | 1 | 0 | FAIL — timeout |
+| **F-162 HUB (ad-hoc)** | **6** | **0** | **1** | **✅ PASS** |
+
+**Root cause:** S60Auth DEV přepnut na lokální PG (workaround) → kaskáda auth failures.
+
+---
+
+### Známé problémy
+
+| Problém | Služba | Status |
+|---------|--------|--------|
+| Auth DEV → lokální PG místo DO Managed PG | S60Auth | Eskalováno main |
+| S60Mail DEV 502 | S60Mail | Persistentní |
+| Billit DEV /invoices 404 | Billit | Not deployed locally |
+| Billit PROD → HTTP 301 | Billit | HTTPS config issue |
+| TEST_TOKEN not set → auth testy skipnuty | Auth/BadWolf | Chybí config |
+| Learnia uppercase course codes | Learnia | Bug u badwolf |
+
+---
+
+### Backlog: Co přidat
+
+1. S60Nexus smoke + integration
+2. SSO Portál smoke
+3. n8n health check
+4. KVT, NoGames WP smoke
+5. Moodle (přes BadWolf /courses)

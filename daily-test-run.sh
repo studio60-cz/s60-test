@@ -170,6 +170,28 @@ Log: $LOG_FILE
 EOF
 )" test
 
+# Report to Kaizen (KPI tracking)
+/root/dev/agent-messages/send-message.sh kaizen INFO \
+  "TEST REPORT: [$DATE] $TOTAL_PASS/$TOTAL tests" \
+  "$(cat <<KAIZEN_EOF
+TEST REPORT: $DATE
+
+Summary: $TOTAL_PASS/$TOTAL PASS ($PASS_RATE%) | $TOTAL_FAIL FAIL | $TOTAL_SKIP SKIP
+
+Per-služba breakdown:
+  S60Auth:   smoke + integration (ForwardAuth, S60Auth) + regression (4 testy)
+  BadWolf:   smoke + integration (Applications) + regression (2 testy)
+  Billit:    smoke + regression (scope, decimal, DI, RLS — 4 testy)
+  S60Mail:   smoke + integration
+  S60Venom:  smoke only
+  S60Pulse:  smoke only
+  Learnia:   regression (1 test)
+  Nexus/KVT/NoGames/Moodle/n8n/Portal: bez pokrytí
+
+Coverage: 6/13 služeb (46%)
+KAIZEN_EOF
+)" test
+
 # If failures → also notify responsible agents
 if [ "$TOTAL_FAIL" -gt 0 ]; then
   # Check which suites failed and notify responsible agents
