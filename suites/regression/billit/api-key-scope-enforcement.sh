@@ -4,6 +4,11 @@
 # BUG: API klíče měly scopes v DB (permissions JSONB) ale žádný guard je
 #      nekontroloval → jakýkoliv platný API klíč mohl dělat cokoliv.
 #
+# TEMPORARILY SKIPPED: Čeká na Sentinel SQL pro billit_staging DB.
+# Re-aktivovat po potvrzení od billit agenta. Tracking: F-162.
+echo "⏭ SKIP [F-162] api-key-scope-enforcement — čeká na billit_staging SQL (viz F-162)"
+exit 0
+#
 # Fix: ApiKeyScopeGuard jako globální APP_GUARD + @RequireScope() dekorátor
 # Commit: 070f0d3
 #
