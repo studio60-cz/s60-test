@@ -65,7 +65,7 @@ if [ "$code" = "200" ] || [ "$code" = "401" ] || [ "$code" = "403" ] || [ "$code
 elif [ "$code" = "500" ]; then
   echo -e "  ${RED}❌ FAIL${NC} [reg-billit-rls-02] /invoices vrátil 500 — možný RLS crash"
   FAIL=$((FAIL+1))
-  /root/dev/agent-messages/redis-queue.sh send billit TODO \
+  [ "${REGRESSION_NOTIFY:-0}" = "1" ] && /root/dev/agent-messages/redis-queue.sh send billit TODO \
     "REGRESSION: RLS crash na /invoices" \
     "GET /invoices vrátil 500 — pravděpodobná regrese RLS UUID cast bugu (commit 95b31fc)" test 2>/dev/null || true
 else

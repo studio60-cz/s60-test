@@ -84,7 +84,7 @@ assert_http() {
   else
     echo -e "  ${RED}❌ FAIL${NC} [$id] $desc → HTTP $actual (očekáváno: $expected)"
     FAIL=$((FAIL+1))
-    /root/dev/agent-messages/redis-queue.sh send billit TODO \
+    [ "${REGRESSION_NOTIFY:-0}" = "1" ] && /root/dev/agent-messages/redis-queue.sh send billit TODO \
       "REGRESSION: API key scope enforcement — $id" \
       "Test $id selhal: $desc. HTTP $actual (očekáváno $expected). Commit 070f0d3" test 2>/dev/null || true
   fi
@@ -177,7 +177,7 @@ else
   elif [ "$code" = "403" ]; then
     echo -e "  ${RED}❌ FAIL${NC} [reg-billit-scope-04] API key write:invoices → POST /invoices → 403 (scope guard blokuje write klíč!)"
     FAIL=$((FAIL+1))
-    /root/dev/agent-messages/redis-queue.sh send billit TODO \
+    [ "${REGRESSION_NOTIFY:-0}" = "1" ] && /root/dev/agent-messages/redis-queue.sh send billit TODO \
       "REGRESSION: write:invoices scope blokován" \
       "API klíč s write:invoices dostal 403 na POST /invoices — scope guard nerozpoznal write scope. Commit 070f0d3" test 2>/dev/null || true
   else
@@ -202,7 +202,7 @@ else
   elif [ "$code" = "403" ]; then
     echo -e "  ${RED}❌ FAIL${NC} [reg-billit-scope-05] JWT token → GET /invoices → 403 (JWT nemá být scope-checked!)"
     FAIL=$((FAIL+1))
-    /root/dev/agent-messages/redis-queue.sh send billit TODO \
+    [ "${REGRESSION_NOTIFY:-0}" = "1" ] && /root/dev/agent-messages/redis-queue.sh send billit TODO \
       "REGRESSION: JWT token dostává 403 scope error" \
       "JWT Bearer token dostal 403 na GET /invoices — ApiKeyScopeGuard aplikuje scope check i na JWT. Commit 070f0d3" test 2>/dev/null || true
   elif [ "$code" = "401" ]; then

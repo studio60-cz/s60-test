@@ -59,7 +59,7 @@ if [ "$code" = "200" ] || [ "$code" = "401" ] || [ "$code" = "403" ] || [ "$code
 elif [ "$code" = "500" ]; then
   echo -e "  ${RED}❌ FAIL${NC} [reg-billit-di-02] GET /products → 500 (DI crash regrese!)"
   FAIL=$((FAIL+1))
-  /root/dev/agent-messages/redis-queue.sh send billit TODO \
+  [ "${REGRESSION_NOTIFY:-0}" = "1" ] && /root/dev/agent-messages/redis-queue.sh send billit TODO \
     "REGRESSION: ProductsModule DI crash" \
     "GET /v1/accounts/${BILLIT_SLUG}/products vrátil 500 — regrese TenantUser DI bugu (commit 95b31fc)" test 2>/dev/null || true
 elif [ "$code" = "000" ]; then
