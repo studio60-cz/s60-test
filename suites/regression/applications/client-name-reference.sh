@@ -1,5 +1,6 @@
 #!/bin/bash
 # REGRESSION: BadWolf — /applications response musí obsahovat client.name
+# @env dev hub prod
 #
 # BUG (commit fb6305f): EditApplicationForm v Venom používal client.name
 #       ale API vracelo client.firstName + client.lastName (nebo nested struktura)

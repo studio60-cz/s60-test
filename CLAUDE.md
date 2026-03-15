@@ -21,7 +21,7 @@
 
 **Našel jsi bug?** Reportuj, neopravuj:
 ```bash
-/root/dev/agent-messages/redis-queue.sh send badwolf TODO "Bug nalezen" "Popis + test který failuje..." test
+/root/dev/agent-messages/send-message.sh badwolf TODO "Bug nalezen" "Popis + test který failuje..." test
 ```
 
 ---
@@ -55,18 +55,35 @@ Každé klíčové rozhodnutí/nález → **povinně** zapsat:
 
 ---
 
+## 📂 Katalog procesů
+
+**PŘED KAŽDÝM SERVISNÍM ÚKONEM** (restart, deploy, migrace, konfigurace):
+1. Najdi odpovídající postup v `docs/catalog.md`
+2. Pokud postup neexistuje → proveď úkon → **vytvoř nový runbook** a přidej do katalogu
+
+**Struktura:**
+```
+docs/catalog.md           # index procesů (tento agent)
+docs/runbooks/            # jednotlivé runbooky
+```
+
+**Service Lifecycle routing** (koho žádat o restart/deploy):
+→ `/root/dev/catalog/agents/AGENT_MAP.md` sekce "Service Lifecycle"
+
+---
+
 ## 💬 Komunikace
 
 ⚠️ **NIKDY neposílej credentials/hesla/API klíče v message body!**
 
 ```bash
 # Posílání zpráv:
-/root/dev/agent-messages/redis-queue.sh send <TO> <TYPE> <SUBJECT> <BODY> test
+/root/dev/agent-messages/send-message.sh <TO> <TYPE> <SUBJECT> <BODY> test
 
 # Příklady:
-/root/dev/agent-messages/redis-queue.sh send badwolf TODO "Bug nalezen" "GET /applications vrací 500 při prázdné DB" test
-/root/dev/agent-messages/redis-queue.sh send pm INFO "Test report" "Smoke: 12/12 PASS, E2E: 8/10 PASS (2 flaky)" test
-/root/dev/agent-messages/redis-queue.sh send main SERVER_START_REQUEST "BE needed for tests" "Need BE for E2E suite" test
+/root/dev/agent-messages/send-message.sh badwolf TODO "Bug nalezen" "GET /applications vrací 500 při prázdné DB" test
+/root/dev/agent-messages/send-message.sh pm INFO "Test report" "Smoke: 12/12 PASS, E2E: 8/10 PASS (2 flaky)" test
+/root/dev/agent-messages/send-message.sh main SERVER_START_REQUEST "BE needed for tests" "Need BE for E2E suite" test
 ```
 
 ### Komu posílat co
@@ -127,7 +144,7 @@ Každé klíčové rozhodnutí/nález → **povinně** zapsat:
 **NIKDY NESPOUŠTĚJ BE PŘÍMO!**
 
 ```bash
-/root/dev/agent-messages/redis-queue.sh send main \
+/root/dev/agent-messages/send-message.sh main \
   SERVER_START_REQUEST "BE needed for E2E tests" "Test agent needs BE running" test
 ```
 

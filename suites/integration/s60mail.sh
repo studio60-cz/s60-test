@@ -1,5 +1,6 @@
 #!/bin/bash
 # S60Mail Integration Tests — P0
+# @env dev hub
 # Pokrývá: health, templates CRUD, editor endpoint
 # S60Mail je internal service (port 3010, bez veřejného nginx)
 # Dev: https://mail.s60dev.cz | Hub/Prod: http://<tailscale>:3010

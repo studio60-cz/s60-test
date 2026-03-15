@@ -1,5 +1,6 @@
 #!/bin/bash
 # REGRESSION: S60Auth ForwardAuth — bad/expired tokens MUSÍ vracet 401
+# @env dev hub prod
 #
 # BUG (potenciální): ForwardAuth mohl propustit request s malformed JWT
 #       nebo expirovaným tokenem který ještě byl v Redis cache.

@@ -1,5 +1,6 @@
 #!/bin/bash
 # REGRESSION: BadWolf — GET /applications with missing courseDate.locationId
+# @env dev hub prod
 #
 # BUG: BadWolf vrací 500 pokud courseDate.locationId neexistuje v DB
 #      Místo 500 se očekává: buď 200 s null/empty locationId, nebo 404

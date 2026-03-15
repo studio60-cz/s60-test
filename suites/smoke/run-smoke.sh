@@ -1,5 +1,6 @@
 #!/bin/bash
 # S60 Smoke Tests — rychlý health check všech služeb
+# @env dev hub prod
 # Spouští sentinel po každém deployi + cron
 # Usage: ./run-smoke.sh [dev|hub|prod] [service|all]
 
@@ -107,6 +108,25 @@ if [ "$SERVICE" = "all" ] || [ "$SERVICE" = "venom" ]; then
     FAIL=$((FAIL + 1))
   fi
   RESULTS+=("{\"id\":\"venom-smoke-index\",\"status\":\"$([ "$http_code" = "200" ] || [ "$http_code" = "403" ] && echo PASS || echo FAIL)\",\"http_code\":\"$http_code\"}")
+fi
+
+# ============================================================
+if [ "$SERVICE" = "all" ] || [ "$SERVICE" = "pulse" ]; then
+  echo -e "\n${YELLOW}-- S60Pulse --${NC}"
+  http_code=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 5 "https://pulse.${DOMAIN}/health" 2>/dev/null || echo "000")
+  if [ "$http_code" = "000" ]; then
+    echo -e "  ${YELLOW}⏭ SKIP${NC} [pulse-smoke-health] Not deployed on $ENV"
+    SKIP=$((SKIP + 1))
+  else
+    bash "$(dirname "$0")/pulse-smoke.sh" "$ENV" || true
+    # PASS/FAIL tracked inside pulse-smoke.sh, update counters from exit code
+    if bash "$(dirname "$0")/pulse-smoke.sh" "$ENV" > /dev/null 2>&1; then
+      PASS=$((PASS + 5))
+    else
+      FAIL=$((FAIL + 1))
+    fi
+  fi
+  RESULTS+=("{\"id\":\"pulse-smoke\",\"status\":\"$([ "$http_code" = "000" ] && echo SKIP || echo CHECK)\",\"http_code\":\"$http_code\"}")
 fi
 
 # ============================================================

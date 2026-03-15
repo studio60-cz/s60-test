@@ -1,5 +1,6 @@
 #!/bin/bash
 # S60Auth Integration Tests — P0
+# @env dev hub
 # Pokrývá: health, OIDC discovery, JWKS, token endpoint, ForwardAuth, userinfo
 # Vyžaduje: TEST_TOKEN nebo TEST_EMAIL+TEST_PASSWORD v /root/dev/.env
 

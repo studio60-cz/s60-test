@@ -1,5 +1,6 @@
 #!/bin/bash
 # REGRESSION: S60Auth — token endpoint nevrací id_token když chybí OIDC env var
+# @env dev hub prod
 #
 # BUG: Pokud OIDC_PRIVATE_KEY nebo OIDC_ISSUER env var nebylo nastaveno,
 #      token endpoint vrátil access_token bez id_token.

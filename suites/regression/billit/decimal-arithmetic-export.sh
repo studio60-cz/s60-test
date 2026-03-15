@@ -1,5 +1,6 @@
 #!/bin/bash
 # REGRESSION: Billit — decimal arithmetic v exports.service (TypeORM string → NaN)
+# @env dev hub prod
 #
 # BUG: TypeORM vrací decimal/numeric sloupce jako string, ne number.
 #      quantity * unitPrice = NaN → špatné součty v XML exportu

@@ -1,5 +1,6 @@
 #!/bin/bash
 # REGRESSION: S60Auth — authorize endpoint vrací 401 místo redirect
+# @env dev hub prod
 #
 # BUG: GET /api/auth/oauth/authorize s platnými parametry vrátilo 401
 #      místo 302 redirect na login nebo consent screen

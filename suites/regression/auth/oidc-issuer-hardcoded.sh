@@ -1,5 +1,6 @@
 #!/bin/bash
 # REGRESSION: S60Auth — OIDC issuer hardcoded na prod URL
+# @env dev hub prod
 #
 # BUG: OIDC issuer byl hardcoded na "https://auth.studio60.cz" i v dev/staging
 #      prostředí. Tokens z dev/staging měly špatný issuer → validace failovala

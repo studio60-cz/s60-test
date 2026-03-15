@@ -1,5 +1,6 @@
 #!/bin/bash
 # S60Pulse Smoke Tests
+# @env dev hub prod
 # Usage: ./pulse-smoke.sh [dev|hub|prod]
 
 ENV=${1:-dev}

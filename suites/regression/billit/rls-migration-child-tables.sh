@@ -1,5 +1,6 @@
 #!/bin/bash
 # REGRESSION: Billit — RLS migrace crashovala na child tabulkách + UUID cast
+# @env dev hub prod
 #
 # BUG 1: RLS CREATE POLICY aplikována na tabulky bez tenant_id sloupce
 #         (invoice_lines, order_lines, expense_lines, order_invoices,

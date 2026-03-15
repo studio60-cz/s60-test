@@ -1,5 +1,6 @@
 #!/bin/bash
 # REGRESSION: Learnia — Jenkins course code case mismatch
+# @env dev hub prod
 #
 # BUG: online_courses.code='Intuice' (velké I), Moodle shortname='intuice' (malé i)
 #      Frontend indexOf() je case-sensitive → kurz se uživateli nezobrazoval

@@ -1,5 +1,6 @@
 #!/bin/bash
 # REGRESSION: Billit — TenantUser chybí v ProductsModule forFeature → DI crash
+# @env dev hub prod
 #
 # BUG: TenantMiddleware vyžaduje TenantUser entitu pro DI, ale ProductsModule
 #      ji neměl v TypeOrmModule.forFeature(). Startup crash při prvním requestu

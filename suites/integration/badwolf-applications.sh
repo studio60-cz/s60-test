@@ -1,5 +1,6 @@
 #!/bin/bash
 # BadWolf Integration Tests — /applications
+# @env dev hub
 # Testuje: auth flow, CRUD, validace, edge cases
 # Vyžaduje: platný JWT token v $TEST_TOKEN nebo .env
 

@@ -1,5 +1,6 @@
 #!/bin/bash
 # REGRESSION: Billit — API key scopes nebyly enforced (F-162)
+# @env dev hub
 #
 # BUG: API klíče měly scopes v DB (permissions JSONB) ale žádný guard je
 #      nekontroloval → jakýkoliv platný API klíč mohl dělat cokoliv.

@@ -1,5 +1,6 @@
 #!/bin/bash
 # Integration Tests — S60Auth ForwardAuth
+# @env dev hub
 # Testuje: token flow, header injection, invalidation
 # Vyžaduje: platný JWT token v $TEST_TOKEN
 
