@@ -133,7 +133,13 @@ fi
 if [ "$SERVICE" = "all" ] || [ "$SERVICE" = "billit" ]; then
   echo -e "\n${YELLOW}-- Billit --${NC}"
   # Billit nemusí být na všech envs; vždy HTTPS (301 = HTTP→HTTPS redirect = chyba v URL)
-  BILLIT_HEALTH_URL="https://billit.${DOMAIN}/health"
+  # DEV: nginx /api/* → billit-api; HUB/PROD: /health přímo
+  if [ "$ENV" = "dev" ]; then
+    BILLIT_HEALTH_URL="https://billit.${DOMAIN}/api/health"
+  else
+    BILLIT_HEALTH_URL="https://billit.${DOMAIN}/health"
+  fi
+  BILLIT_HEALTH_URL="${BILLIT_HEALTH_URL}"
   http_code=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 5 "$BILLIT_HEALTH_URL" 2>/dev/null || echo "000")
   if [ "$http_code" = "000" ]; then
     echo -e "  ${YELLOW}⏭ SKIP${NC} [billit-smoke-health] Not deployed on $ENV"

@@ -19,6 +19,8 @@ set -uo pipefail
 
 BILLIT_URL=${BILLIT_URL:-"https://billit.s60dev.cz"}
 BILLIT_SLUG=${BILLIT_SLUG:-$(echo "$BILLIT_URL" | grep -q "hub" && echo "test" || echo "test-tenant")}
+# DEV nginx: /* → Vite, /api/* → billit-api. Health endpoint se liší.
+BILLIT_HEALTH_URL=$(echo "$BILLIT_URL" | grep -q "hub\|prod" && echo "${BILLIT_URL%/}/health" || echo "${BILLIT_URL%/}/api/health")
 PASS=0; FAIL=0
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
 
@@ -35,7 +37,7 @@ echo -e "\n${YELLOW}=== REGRESSION: billit/decimal-arithmetic-export ===${NC}"
 echo -e "  Bug: TypeORM vrací decimal jako string → quantity*unitPrice=NaN v XML exportu\n"
 
 # Zkontroluj dostupnost
-http_code=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 5 "$BILLIT_URL/health" 2>/dev/null || echo "000")
+http_code=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 5 "$BILLIT_HEALTH_URL" 2>/dev/null || echo "000")
 if [ "$http_code" = "000" ]; then
   echo -e "  ${YELLOW}⏭ SKIP${NC} Billit není dostupný na $BILLIT_URL"
   exit 0
