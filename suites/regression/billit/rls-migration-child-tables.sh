@@ -22,7 +22,9 @@ set -uo pipefail
 BILLIT_URL=${BILLIT_URL:-"https://billit.s60dev.cz"}
 BILLIT_SLUG=${BILLIT_SLUG:-$(echo "$BILLIT_URL" | grep -q "hub" && echo "test" || echo "test-tenant")}
 # DEV nginx: /* → Vite, /api/* → billit-api. Health endpoint se liší.
-BILLIT_HEALTH_URL=$(echo "$BILLIT_URL" | grep -q "hub\|prod" && echo "${BILLIT_URL%/}/health" || echo "${BILLIT_URL%/}/api/health")
+# Health URL: strip /api suffix for base, then add correct path per env
+_BILLIT_BASE="${BILLIT_URL%/api}"
+BILLIT_HEALTH_URL=$(echo "$BILLIT_URL" | grep -q "s60dev" && echo "${_BILLIT_BASE}/api/health" || echo "${_BILLIT_BASE}/health")
 PASS=0; FAIL=0
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
 

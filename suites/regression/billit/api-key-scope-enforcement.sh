@@ -107,7 +107,9 @@ echo -e "  API base: $BILLIT_API_BASE\n"
 
 # Zkontroluj dostupnost — health je bez /api/ prefixu (statický endpoint)
 _HEALTH_BASE=$(echo "$BILLIT_API_BASE" | sed 's|/api$||')
-http_code=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 5 "${_HEALTH_BASE}/health" 2>/dev/null || echo "000")
+# DEV: /api/health, HUB/PROD: /health
+_HEALTH_PATH=$(echo "$BILLIT_API_BASE" | grep -q "s60dev" && echo "/api/health" || echo "/health")
+http_code=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 5 "${_HEALTH_BASE}${_HEALTH_PATH}" 2>/dev/null || echo "000")
 if [ "$http_code" = "000" ]; then
   echo -e "  ${YELLOW}⏭ SKIP${NC} Billit není dostupný na ${_HEALTH_BASE}/health"
   exit 0
