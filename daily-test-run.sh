@@ -72,6 +72,7 @@ log "Start: $(date -u +%H:%M:%S) UTC"
 
 # 1. Smoke Tests (all environments that are up)
 run_suite "Smoke DEV" "bash /root/dev/s60-test/suites/smoke/run-smoke.sh dev all"
+run_suite "Smoke: Pulse DEV" "bash /root/dev/s60-test/suites/smoke/pulse-smoke.sh dev"
 
 # 2. Smoke Hub (staging) — if reachable
 if curl -sk -o /dev/null -w "%{http_code}" --max-time 3 "https://auth.s60hub.cz/api/health" 2>/dev/null | grep -q "200"; then
@@ -149,7 +150,7 @@ if [ "$TOTAL_FAIL" -gt 0 ]; then
   FAIL_DETAILS=$'\n\nFailed tests:\n'"$FAIL_DETAILS"
 fi
 
-/root/dev/agent-messages/redis-queue.sh send pm INFO \
+/root/dev/agent-messages/send-message.sh pm INFO \
   "Daily Test Report [$DATE]: $STATUS_EMOJI" \
   "$(cat <<EOF
 S60 Daily Test Report — $DATE
@@ -178,17 +179,17 @@ if [ "$TOTAL_FAIL" -gt 0 ]; then
     if [ "$status" = "FAIL" ]; then
       case "$name" in
         *BadWolf*|*badwolf*)
-          /root/dev/agent-messages/redis-queue.sh send badwolf INFO \
+          /root/dev/agent-messages/send-message.sh badwolf INFO \
             "Daily test failure: $name" \
             "Test suite '$name' failed in daily run. Check: $LOG_FILE" test
           ;;
         *Auth*|*auth*)
-          /root/dev/agent-messages/redis-queue.sh send auth INFO \
+          /root/dev/agent-messages/send-message.sh auth INFO \
             "Daily test failure: $name" \
             "Test suite '$name' failed in daily run. Check: $LOG_FILE" test
           ;;
         *Venom*|*venom*)
-          /root/dev/agent-messages/redis-queue.sh send venom INFO \
+          /root/dev/agent-messages/send-message.sh venom INFO \
             "Daily test failure: $name" \
             "Test suite '$name' failed in daily run. Check: $LOG_FILE" test
           ;;
