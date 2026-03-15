@@ -4,10 +4,7 @@
 # BUG: API klíče měly scopes v DB (permissions JSONB) ale žádný guard je
 #      nekontroloval → jakýkoliv platný API klíč mohl dělat cokoliv.
 #
-# TEMPORARILY SKIPPED: Čeká na Sentinel SQL pro billit_staging DB.
-# Re-aktivovat po potvrzení od billit agenta. Tracking: F-162.
-echo "⏭ SKIP [F-162] api-key-scope-enforcement — čeká na billit_staging SQL (viz F-162)"
-exit 0
+# HUB READY 2026-03-14 — billit agent potvrdil test data v s60_billit_hub
 #
 # Fix: ApiKeyScopeGuard jako globální APP_GUARD + @RequireScope() dekorátor
 # Commit: 070f0d3
@@ -126,7 +123,7 @@ if [ -z "${TEST_API_KEY_NO_SCOPE:-}" ]; then
   SKIP=$((SKIP+1))
 else
   code=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 5 \
-    -H "X-Api-Key: $TEST_API_KEY_NO_SCOPE" \
+    -H "Authorization: ApiKey $TEST_API_KEY_NO_SCOPE" \
     "$INVOICES_URL" 2>/dev/null || echo "000")
   assert_http "reg-billit-scope-01" "API key bez scopů → GET /invoices" "$code" "403"
 fi
@@ -138,7 +135,7 @@ if [ -z "${TEST_API_KEY_READ_INVOICES:-}" ]; then
   SKIP=$((SKIP+1))
 else
   code=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 5 \
-    -H "X-Api-Key: $TEST_API_KEY_READ_INVOICES" \
+    -H "Authorization: ApiKey $TEST_API_KEY_READ_INVOICES" \
     "$INVOICES_URL" 2>/dev/null || echo "000")
   assert_http "reg-billit-scope-02" "API key read:invoices → GET /invoices" "$code" "200"
 fi
@@ -151,7 +148,7 @@ if [ -z "${TEST_API_KEY_READ_INVOICES:-}" ]; then
 else
   code=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 5 \
     -X POST \
-    -H "X-Api-Key: $TEST_API_KEY_READ_INVOICES" \
+    -H "Authorization: ApiKey $TEST_API_KEY_READ_INVOICES" \
     -H "Content-Type: application/json" \
     -d '{"clientId":"test","lines":[]}' \
     "$INVOICES_URL" 2>/dev/null || echo "000")
@@ -166,7 +163,7 @@ if [ -z "${TEST_API_KEY_WRITE_INVOICES:-}" ]; then
 else
   code=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 5 \
     -X POST \
-    -H "X-Api-Key: $TEST_API_KEY_WRITE_INVOICES" \
+    -H "Authorization: ApiKey $TEST_API_KEY_WRITE_INVOICES" \
     -H "Content-Type: application/json" \
     -d '{"clientId":"test","lines":[]}' \
     "$INVOICES_URL" 2>/dev/null || echo "000")
@@ -221,10 +218,10 @@ if [ -z "${TEST_API_KEY_NO_SCOPE:-}" ]; then
   SKIP=$((SKIP+1))
 else
   body=$(curl -sk --max-time 5 \
-    -H "X-Api-Key: $TEST_API_KEY_NO_SCOPE" \
+    -H "Authorization: ApiKey $TEST_API_KEY_NO_SCOPE" \
     "$INVOICES_URL" 2>/dev/null || echo "{}")
   code=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 5 \
-    -H "X-Api-Key: $TEST_API_KEY_NO_SCOPE" \
+    -H "Authorization: ApiKey $TEST_API_KEY_NO_SCOPE" \
     "$INVOICES_URL" 2>/dev/null || echo "000")
   assert_http "reg-billit-scope-06a" "null permissions → 403" "$code" "403"
   if [ "$code" = "403" ]; then
