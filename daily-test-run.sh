@@ -105,12 +105,23 @@ else
 fi
 
 # 5. Regression tests (run all .sh files in regression dirs)
+# Load DEV .env for credentials
+_BILLIT_HUB_SLUG=$(grep "^BILLIT_TEST_HUB_SLUG=" /root/dev/.env 2>/dev/null | cut -d= -f2 | tr -d '"')
+_BILLIT_HUB_KEY_NONE=$(grep "^BILLIT_TEST_HUB_API_KEY_NO_SCOPE=" /root/dev/.env 2>/dev/null | cut -d= -f2 | tr -d '"')
+_BILLIT_HUB_KEY_READ=$(grep "^BILLIT_TEST_HUB_API_KEY_READ_INVOICES=" /root/dev/.env 2>/dev/null | cut -d= -f2 | tr -d '"')
+_BILLIT_HUB_KEY_WRITE=$(grep "^BILLIT_TEST_HUB_API_KEY_WRITE_INVOICES=" /root/dev/.env 2>/dev/null | cut -d= -f2 | tr -d '"')
+
 for dir in /root/dev/s60-test/suites/regression/*/; do
   module=$(basename "$dir")
   for test_file in "$dir"*.sh; do
     [ -f "$test_file" ] || continue
     test_name="Regression: ${module}/$(basename "$test_file" .sh)"
-    run_suite "$test_name" "bash $test_file"
+    # Billit DEV: sdílí hub DB od 2026-03-15 → hub klíče + /api URL
+    if [ "$module" = "billit" ]; then
+      run_suite "$test_name" "BILLIT_URL=https://billit.s60dev.cz/api BILLIT_SLUG=${_BILLIT_HUB_SLUG:-test} TEST_BILLIT_SLUG=${_BILLIT_HUB_SLUG:-test} TEST_API_KEY_NO_SCOPE=${_BILLIT_HUB_KEY_NONE} TEST_API_KEY_READ_INVOICES=${_BILLIT_HUB_KEY_READ} TEST_API_KEY_WRITE_INVOICES=${_BILLIT_HUB_KEY_WRITE} bash $test_file"
+    else
+      run_suite "$test_name" "bash $test_file"
+    fi
   done
 done
 
