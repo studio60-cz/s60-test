@@ -50,7 +50,7 @@ assert "reg-billit-dec-01" "GET /health → 200" "$http_code" "200"
 # Test 2: Export endpoint nesmí vrátit 500
 # /v1/accounts/:slug/exports (XML/CSV) — 401 bez tokenu = OK
 code=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 5 \
-  "$BILLIT_URL/v1/accounts/${BILLIT_SLUG}/exports" \
+  "${_BILLIT_BASE}/api/v1/accounts/${BILLIT_SLUG}/exports" \
   -H "Authorization: Bearer invalid" 2>/dev/null || echo "000")
 
 if [ "$code" = "200" ] || [ "$code" = "401" ] || [ "$code" = "403" ] || [ "$code" = "404" ]; then
