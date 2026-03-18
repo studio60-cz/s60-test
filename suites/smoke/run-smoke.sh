@@ -51,7 +51,8 @@ check() {
   local response
   local http_code
 
-  http_code=$(curl -sk -o /tmp/smoke-body -w "%{http_code}" --max-time 5 "$url" 2>/dev/null || echo "000")
+  http_code=$(curl -sk -o /tmp/smoke-body -w "%{http_code}" --max-time 5 "$url" 2>/dev/null) || true
+  [ -z "$http_code" ] && http_code="000"
   response=$(cat /tmp/smoke-body 2>/dev/null || echo "")
 
   local status="PASS"
@@ -113,7 +114,8 @@ fi
 # ============================================================
 if [ "$SERVICE" = "all" ] || [ "$SERVICE" = "pulse" ]; then
   echo -e "\n${YELLOW}-- S60Pulse --${NC}"
-  http_code=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 5 "https://pulse.${DOMAIN}/health" 2>/dev/null || echo "000")
+  http_code=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 5 "https://pulse.${DOMAIN}/health" 2>/dev/null) || true
+  [ -z "$http_code" ] && http_code="000"
   if [ "$http_code" = "000" ]; then
     echo -e "  ${YELLOW}⏭ SKIP${NC} [pulse-smoke-health] Not deployed on $ENV"
     SKIP=$((SKIP + 1))
@@ -140,7 +142,8 @@ if [ "$SERVICE" = "all" ] || [ "$SERVICE" = "billit" ]; then
     BILLIT_HEALTH_URL="https://billit.${DOMAIN}/health"
   fi
   BILLIT_HEALTH_URL="${BILLIT_HEALTH_URL}"
-  http_code=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 5 "$BILLIT_HEALTH_URL" 2>/dev/null || echo "000")
+  http_code=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 5 "$BILLIT_HEALTH_URL" 2>/dev/null) || true
+  [ -z "$http_code" ] && http_code="000"
   if [ "$http_code" = "000" ]; then
     echo -e "  ${YELLOW}⏭ SKIP${NC} [billit-smoke-health] Not deployed on $ENV"
     SKIP=$((SKIP + 1))
@@ -170,13 +173,87 @@ if [ "$SERVICE" = "all" ] || [ "$SERVICE" = "mail" ]; then
       MAIL_URL="http://${MAIL_TAILSCALE_PROD}:${MAIL_PORT}/health"
       ;;
   esac
-  http_code=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 5 "$MAIL_URL" 2>/dev/null || echo "000")
+  http_code=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 5 "$MAIL_URL" 2>/dev/null) || true
+  [ -z "$http_code" ] && http_code="000"
   if [ "$http_code" = "000" ]; then
     echo -e "  ${YELLOW}⏭ SKIP${NC} [mail-smoke-health] Not reachable ($MAIL_URL) — not deployed or Tailscale down"
     SKIP=$((SKIP + 1))
   else
     check "mail-smoke-health"   "GET /health ($ENV)"   "$MAIL_URL"   200
   fi
+fi
+
+# ============================================================
+if [ "$SERVICE" = "all" ] || [ "$SERVICE" = "nexus" ]; then
+  echo -e "\n${YELLOW}-- S60Nexus (Cortex VPS) --${NC}"
+  # Nexus/Zoe běží na Cortex VPS (100.120.98.59:8090) — žádná veřejná doména
+  NEXUS_URL="http://100.120.98.59:8090/health"
+  http_code=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 5 "$NEXUS_URL" 2>/dev/null) || true
+  [ -z "$http_code" ] && http_code="000"
+  if [ "$http_code" = "000" ]; then
+    echo -e "  ${YELLOW}⏭ SKIP${NC} [nexus-smoke-health] Not reachable ($NEXUS_URL) — Tailscale down?"
+    SKIP=$((SKIP + 1))
+  else
+    check "nexus-smoke-health" "GET /health (Cortex:8090)" "$NEXUS_URL" 200
+  fi
+  RESULTS+=("{\"id\":\"nexus-smoke-health\",\"status\":\"$([ "$http_code" = "000" ] && echo SKIP || echo CHECK)\",\"http_code\":\"$http_code\"}")
+fi
+
+# ============================================================
+if [ "$SERVICE" = "all" ] || [ "$SERVICE" = "portal" ]; then
+  echo -e "\n${YELLOW}-- SSO Portál --${NC}"
+  http_code=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 5 "https://portal.${DOMAIN}/" 2>/dev/null) || true
+  [ -z "$http_code" ] && http_code="000"
+  if [ "$http_code" = "000" ]; then
+    echo -e "  ${YELLOW}⏭ SKIP${NC} [portal-smoke-index] Not deployed on $ENV"
+    SKIP=$((SKIP + 1))
+  elif [ "$http_code" = "200" ] || [ "$http_code" = "403" ]; then
+    echo -e "  ${GREEN}✅ PASS${NC} [portal-smoke-index] GET / (HTTP $http_code — service up)"
+    PASS=$((PASS + 1))
+  else
+    echo -e "  ${RED}❌ FAIL${NC} [portal-smoke-index] GET / (HTTP $http_code)"
+    FAIL=$((FAIL + 1))
+  fi
+  RESULTS+=("{\"id\":\"portal-smoke-index\",\"status\":\"$([ "$http_code" = "200" ] || [ "$http_code" = "403" ] && echo PASS || echo FAIL)\",\"http_code\":\"$http_code\"}")
+fi
+
+# ============================================================
+if [ "$SERVICE" = "all" ] || [ "$SERVICE" = "n8n" ]; then
+  echo -e "\n${YELLOW}-- n8n --${NC}"
+  http_code=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 5 "https://n8n.${DOMAIN}/" 2>/dev/null) || true
+  [ -z "$http_code" ] && http_code="000"
+  if [ "$http_code" = "000" ]; then
+    echo -e "  ${YELLOW}⏭ SKIP${NC} [n8n-smoke-index] Not deployed on $ENV"
+    SKIP=$((SKIP + 1))
+  elif [ "$http_code" = "200" ] || [ "$http_code" = "302" ] || [ "$http_code" = "403" ]; then
+    echo -e "  ${GREEN}✅ PASS${NC} [n8n-smoke-index] GET / (HTTP $http_code — service up)"
+    PASS=$((PASS + 1))
+  else
+    echo -e "  ${RED}❌ FAIL${NC} [n8n-smoke-index] GET / (HTTP $http_code)"
+    FAIL=$((FAIL + 1))
+  fi
+  RESULTS+=("{\"id\":\"n8n-smoke-index\",\"status\":\"$([ "$http_code" = "200" ] || [ "$http_code" = "302" ] || [ "$http_code" = "403" ] && echo PASS || echo FAIL)\",\"http_code\":\"$http_code\"}")
+fi
+
+# ============================================================
+if [ "$SERVICE" = "all" ] || [ "$SERVICE" = "wp" ]; then
+  echo -e "\n${YELLOW}-- WordPress weby --${NC}"
+  for wp_site in learnia.cz kvantovaterapie.cz nogames.cz; do
+    wp_id=$(echo "$wp_site" | tr '.' '-')
+    http_code=$(curl -skL -o /dev/null -w "%{http_code}" --max-time 10 "https://${wp_site}/" 2>/dev/null) || true
+    [ -z "$http_code" ] && http_code="000"
+    if [ "$http_code" = "000" ]; then
+      echo -e "  ${YELLOW}⏭ SKIP${NC} [wp-${wp_id}] Not reachable"
+      SKIP=$((SKIP + 1))
+    elif [ "$http_code" = "200" ]; then
+      echo -e "  ${GREEN}✅ PASS${NC} [wp-${wp_id}] GET / (HTTP $http_code)"
+      PASS=$((PASS + 1))
+    else
+      echo -e "  ${RED}❌ FAIL${NC} [wp-${wp_id}] GET / (HTTP $http_code)"
+      FAIL=$((FAIL + 1))
+    fi
+    RESULTS+=("{\"id\":\"wp-${wp_id}\",\"status\":\"$([ "$http_code" = "200" ] && echo PASS || echo FAIL)\",\"http_code\":\"$http_code\"}")
+  done
 fi
 
 # ============================================================
