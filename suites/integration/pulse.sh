@@ -23,8 +23,12 @@ PASS=0; FAIL=0; SKIP=0
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
 
 # Načti API klíč
+# POZOR: Pulse auth guard čte X-Api-Key header (ne Authorization Bearer!)
+# Key z /tmp/qa-pulse-admin-test-key.txt nebo PULSE_QA_API_KEY v .env
 _e() { grep "^$1=" /root/dev/.env 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo ""; }
 PULSE_API_KEY=${PULSE_API_KEY:-$(_e PULSE_QA_API_KEY)}
+# Fallback: zkus raw key z /tmp
+[ -z "${PULSE_API_KEY:-}" ] && PULSE_API_KEY=$(cat /tmp/qa-pulse-admin-test-key.txt 2>/dev/null || echo "")
 
 assert_http() {
   local id=$1 desc=$2 code=$3 expected=$4
@@ -43,7 +47,19 @@ assert_http() {
 echo -e "\n${YELLOW}=== Pulse Integration Tests ($BASE_URL) ===${NC}\n"
 
 # ---------------------------------------------------------------
-echo -e "${YELLOW}-- Auth guard --${NC}"
+echo -e "${YELLOW}-- Public endpoints (bez auth) --${NC}"
+
+# /api/conversation/methodologies je public (fix 4bcd229 — jen na hub/prod)
+code=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 5 "$BASE_URL/api/conversation/methodologies" 2>/dev/null || echo "000")
+if [ "$ENV" = "dev" ] && [ "$code" = "401" ]; then
+  echo -e "  ${YELLOW}⏭ SKIP${NC} [pulse-int-pub-01] /api/conversation/methodologies → 401 na DEV (fix 4bcd229 ještě nenasazen)"
+  SKIP=$((SKIP+1))
+else
+  assert_http "pulse-int-pub-01" "GET /api/conversation/methodologies → 200 (public)" "$code" "200"
+fi
+
+# ---------------------------------------------------------------
+echo -e "\n${YELLOW}-- Auth guard --${NC}"
 
 # Bez tokenu → 401
 code=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 5 "$BASE_URL/api/outputs" 2>/dev/null || echo "000")
@@ -60,10 +76,10 @@ assert_http "pulse-int-auth-03" "GET /api/outputs/:id → 404 (endpoint neexistu
 echo -e "\n${YELLOW}-- Authenticated endpoints --${NC}"
 
 if [ -z "${PULSE_API_KEY:-}" ]; then
-  echo -e "  ${YELLOW}⏭ SKIP${NC} Auth testy — PULSE_QA_API_KEY not set v /root/dev/.env"
+  echo -e "  ${YELLOW}⏭ SKIP${NC} Auth testy — PULSE_QA_API_KEY not set v /root/dev/.env a /tmp/qa-pulse-admin-test-key.txt nenalezen"
   SKIP=$((SKIP+3))
 else
-  AUTH_HEADER="Authorization: Bearer $PULSE_API_KEY"
+  AUTH_HEADER="X-Api-Key: $PULSE_API_KEY"
 
   # Projects list
   code=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 5 -H "$AUTH_HEADER" "$BASE_URL/api/projects" 2>/dev/null || echo "000")
