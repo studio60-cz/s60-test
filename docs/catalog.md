@@ -7,6 +7,7 @@ Pokud proces neexistuje, vytvoř ho po dokončení úkonu.
 
 | Proces | Soubor | Kdy použít |
 |--------|--------|------------|
+| **Scheduled run** | [`docs/runbooks/scheduled-run.md`](runbooks/scheduled-run.md) | Scheduler task / manuálně — hlavní proces test agenta |
 | Denní test run | `daily-test-run.sh` | Každý den 6:03 UTC (cron), nebo manuálně |
 | Smoke testy | `suites/smoke/run-smoke.sh` | Po deployi, nebo ad-hoc health check |
 | S60Auth integration | `suites/integration/s60auth.sh` | Po změnách v auth, OIDC, ForwardAuth |

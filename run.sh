@@ -16,6 +16,15 @@ fi
 echo $$ > "$LOCKFILE"
 trap "rm -f $LOCKFILE" EXIT
 cd "$AGENT_DIR"
+# Set agent identity
+export S60_AGENT="test"
+
+# Idle check — skip claude if no messages in Redis queue
+UNREAD=$(docker exec s60-redis redis-cli -a changeme123 --no-auth-warning LLEN agent:test:messages 2>/dev/null || echo "0")
+if [ "${UNREAD:-0}" -eq 0 ] 2>/dev/null; then
+  echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] Idle — 0 unread, skipping claude" >> "$LOG_FILE"
+  exit 0
+fi
 unset CLAUDECODE
 ITER_NUM=$(grep -c "^\[" "$LOG_FILE" 2>/dev/null || echo "0")
 echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] Starting iteration..." >> "$LOG_FILE"

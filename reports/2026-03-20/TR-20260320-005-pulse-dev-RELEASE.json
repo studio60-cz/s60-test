@@ -1,0 +1,25 @@
+{
+  "run_id": "TR-20260320-005",
+  "agent": "test",
+  "service": "pulse",
+  "environment": "dev",
+  "tier": "RELEASE",
+  "trigger": "deploy-request",
+  "timestamp": "2026-03-20T19:01:55Z",
+  "duration_seconds": 8,
+  "summary": {
+    "total": 131,
+    "passed": 125,
+    "failed": 6,
+    "skipped": 0
+  },
+  "coverage": {
+    "source_files": 65,
+    "test_files": 6,
+    "percentage": 9.2
+  },
+  "verdict": "FAIL",
+  "blocking": true,
+  "failure_summary": ["unit-tests — 6 test(s) failed"],
+  "report_file": "/root/projects/s60/s60-test/reports/2026-03-20/TR-20260320-005-pulse-dev-RELEASE.json"
+}

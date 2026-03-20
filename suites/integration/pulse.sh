@@ -1,6 +1,7 @@
 #!/bin/bash
 # Pulse Integration Tests
-# @env dev hub
+# @env hub
+# NOTE: Pulse nemá DEV prostředí — testy běží vždy proti hub (s60hub.cz)
 #
 # Pokrývá: auth guard, output sub-endpointy, M2M API klíč
 #
@@ -12,11 +13,11 @@
 
 set -uo pipefail
 
-ENV=${1:-dev}
+ENV=${1:-hub}
 case "$ENV" in
-  dev)  BASE_URL="https://pulse.s60dev.cz" ;;
   hub)  BASE_URL="https://pulse.s60hub.cz" ;;
-  *)    echo "Unknown env: $ENV (dev|hub)"; exit 1 ;;
+  prod) BASE_URL="https://pulselab.cz" ;;
+  *)    echo "Unknown env: $ENV (hub|prod)"; exit 1 ;;
 esac
 
 PASS=0; FAIL=0; SKIP=0
@@ -49,14 +50,9 @@ echo -e "\n${YELLOW}=== Pulse Integration Tests ($BASE_URL) ===${NC}\n"
 # ---------------------------------------------------------------
 echo -e "${YELLOW}-- Public endpoints (bez auth) --${NC}"
 
-# /api/conversation/methodologies je public (fix 4bcd229 — jen na hub/prod)
+# /api/conversation/methodologies je public (fix 4bcd229)
 code=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 5 "$BASE_URL/api/conversation/methodologies" 2>/dev/null || echo "000")
-if [ "$ENV" = "dev" ] && [ "$code" = "401" ]; then
-  echo -e "  ${YELLOW}⏭ SKIP${NC} [pulse-int-pub-01] /api/conversation/methodologies → 401 na DEV (fix 4bcd229 ještě nenasazen)"
-  SKIP=$((SKIP+1))
-else
-  assert_http "pulse-int-pub-01" "GET /api/conversation/methodologies → 200 (public)" "$code" "200"
-fi
+assert_http "pulse-int-pub-01" "GET /api/conversation/methodologies → 200 (public)" "$code" "200"
 
 # ---------------------------------------------------------------
 echo -e "\n${YELLOW}-- Auth guard --${NC}"

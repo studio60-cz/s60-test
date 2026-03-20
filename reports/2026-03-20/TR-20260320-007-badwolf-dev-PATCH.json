@@ -1,0 +1,25 @@
+{
+  "run_id": "TR-20260320-007",
+  "agent": "test",
+  "service": "badwolf",
+  "environment": "dev",
+  "tier": "PATCH",
+  "trigger": "deploy-request",
+  "timestamp": "2026-03-20T19:02:03Z",
+  "duration_seconds": 0,
+  "summary": {
+    "total": 2,
+    "passed": 0,
+    "failed": 0,
+    "skipped": 2
+  },
+  "coverage": {
+    "source_files": 111,
+    "test_files": 0,
+    "percentage": 0.0
+  },
+  "verdict": "PASS",
+  "blocking": false,
+  "failure_summary": [],
+  "report_file": "/root/projects/s60/s60-test/reports/2026-03-20/TR-20260320-007-badwolf-dev-PATCH.json"
+}
