@@ -1,66 +1,72 @@
 # Test — aktuální stav
 
-## Poslední run: 2026-03-15 (daily cron)
+## Poslední run: 2026-03-20 19:38 UTC (scheduled)
 
 ### Coverage per služba
 
-| Služba | Smoke | Integration | Regression | E2E | Pokrytí |
-|--------|-------|-------------|------------|-----|---------|
-| **S60Auth** | ✅ dev/hub/prod | ✅ 2 suites | ✅ 4 testy | ❌ | Dobrá |
-| **S60BadWolf** | ✅ dev/hub/prod | ✅ 1 suite | ✅ 2 testy | ❌ | Dobrá |
-| **Billit** | ✅ dev/hub/prod | ❌ | ✅ 4 testy | ❌ | Střední |
-| **S60Mail** | ✅ dev | ✅ 1 suite | ❌ | ❌ | Střední |
-| **S60Venom** | ✅ dev/hub/prod | ❌ | ❌ | ❌ | Slabá |
-| **S60Pulse** | ✅ dev/hub/prod | ❌ | ❌ | ❌ | Slabá |
-| **Learnia** | ❌ | ❌ | ✅ 1 test | ❌ | Slabá |
-| **S60Nexus** | ❌ | ❌ | ❌ | ❌ | Žádná |
-| **KVT** | ❌ | ❌ | ❌ | ❌ | Žádná |
-| **NoGames** | ❌ | ❌ | ❌ | ❌ | Žádná |
-| **Moodle** | ❌ | ❌ | ❌ | ❌ | Žádná |
-| **n8n** | ❌ | ❌ | ❌ | ❌ | Žádná |
-| **SSO Portál** | ❌ | ❌ | ❌ | ❌ | Žádná |
+| Služba | Smoke DEV | Smoke HUB | Regression | Celkem testů |
+|--------|-----------|-----------|------------|-------------|
+| **S60Auth** | ✅ 4/4 | ✅ 4/4 | ✅ 21/21 (1 SKIP) | **29** |
+| **S60BadWolf** | ✅ 3/3 | ✅ 3/3 | 0 (no TEST_TOKEN) | **6** |
+| **S60Venom** | ❌ 502 | ✅ 1/1 (200) | — | **1** |
+| **S60Pulse** | ✅ 5/5 | ✅ 5/5 | — | **10** |
+| **Billit** | ✅ 1/1 | ✅ 1/1 | ✅ 14/14 (1 SKIP) | **16** |
+| **S60Mail** | ✅ 1/1 | ⏭ SKIP (Tailscale) | ✅ 14/14 integration | **15** |
+| **SSO Portál** | ✅ 1/1 (403) | ❌ 301 | — | **1** |
+| **n8n** | ✅ 1/1 (403) | ✅ 1/1 (200) | — | **2** |
+| **Learnia WP** | ✅ 1/1 | ✅ 1/1 | — | **2** |
+| **KVT WP** | ✅ 1/1 | ✅ 1/1 | — | **2** |
+| **NoGames WP** | ✅ 1/1 | ✅ 1/1 | — | **2** |
+| **S60Nexus** | ✅ 1/1 | — | — | **1** |
 
-**Pokrytí: 6/13 služeb (46%) — 17 testových souborů**
+**Celkem: ~119 PASS / 5 FAIL / 10 SKIP**
+**Pokrytí: 11/12 služeb smoke DEV (92%), 9/12 HUB (75%)**
 
 ---
 
-### Výsledky posledního daily runu (2026-03-14)
+### Výsledky (2026-03-20 19:38 UTC)
 
 | Suite | PASS | FAIL | SKIP | Status |
 |-------|------|------|------|--------|
-| Smoke DEV | ~8 | 6 | 0 | FAIL — auth 502 (lokální PG) |
-| Smoke HUB | ~6 | 2 | 0 | FAIL — badwolf courses 500 |
-| Smoke PROD | ~4 | 3 | 3 | FAIL — not deployed |
-| Integration: ForwardAuth | 5 | 3 | 0 | FAIL — auth down |
-| Integration: BadWolf Apps | 2 | 0 | 0 | ✅ PASS |
-| Integration: S60Auth | 0 | 19 | 0 | FAIL — auth down |
-| Regression: applications | 0 | 0 | 5 | SKIP — no token |
-| Regression: auth | 5 | 3 | 0 | FAIL — auth down |
-| Regression: billit | 8 | 4 | 2 | PARTIAL |
-| Regression: learnia | 0 | 1 | 0 | FAIL — timeout |
-| **F-162 HUB (ad-hoc)** | **6** | **0** | **1** | **✅ PASS** |
+| **Smoke DEV** | **20** | **1** | **0** | ❌ Venom 502 |
+| **Smoke HUB** | **19** | **1** | **1** | ❌ Portal 301, Mail SKIP |
+| **Auth integration** | **25** | **0** | **2** | ✅ ALL PASS |
+| **Mail integration** | **14** | **0** | **0** | ✅ ALL PASS |
+| **BadWolf integration** | **2** | **0** | **0** | ✅ PASS |
+| **Pulse integration** | **4** | **3** | **4** | ❌ Auth'd endpoints 401 |
+| **Regression Auth** | **21** | **0** | **1** | ✅ ALL PASS |
+| **Regression Billit** | **14** | **0** | **1** | ✅ ALL PASS |
+| **Regression Apps** | **0** | **0** | **2** | ⏭ SKIP (no TEST_TOKEN) |
 
-**Root cause:** S60Auth DEV přepnut na lokální PG (workaround) → kaskáda auth failures.
+---
+
+### Změny oproti 2026-03-17
+
+- ✅ Billit regression: 14/14 PASS (bylo 4 FAIL — opraveny exports, products, invoices, orders)
+- ✅ Mail integration: 14/14 PASS (nový suite — full CRUD)
+- ✅ Nexus smoke: PASS (bylo not deployed)
+- ❌ Venom DEV: 502 (bylo OK) — reported to venom
+- ❌ Pulse auth'd endpoints: 401 (token rejected) — reported to pulse
+- ❌ Portal HUB: 301 (bylo not deployed)
 
 ---
 
 ### Známé problémy
 
-| Problém | Služba | Status |
-|---------|--------|--------|
-| Auth DEV → lokální PG místo DO Managed PG | S60Auth | Eskalováno main |
-| S60Mail DEV 502 | S60Mail | Persistentní |
-| Billit DEV /invoices 404 | Billit | Not deployed locally |
-| Billit PROD → HTTP 301 | Billit | HTTPS config issue |
-| TEST_TOKEN not set → auth testy skipnuty | Auth/BadWolf | Chybí config |
-| Learnia uppercase course codes | Learnia | Bug u badwolf |
+| Problém | Služba | Env | Status | Od |
+|---------|--------|-----|--------|-----|
+| Venom DEV 502 | Venom | DEV | NEW — reported | 2026-03-20 |
+| Pulse auth'd endpoints 401 | Pulse | HUB | NEW — reported | 2026-03-20 |
+| Portal HUB 301 (redirect) | Portal | HUB | Low priority | 2026-03-20 |
+| Mail unreachable on HUB (Tailscale?) | Mail | HUB | Infra | 2026-03-15 |
+| Applications regression needs TEST_TOKEN | BadWolf | DEV | Missing config | 2026-03-17 |
 
 ---
 
 ### Backlog: Co přidat
 
-1. S60Nexus smoke + integration
-2. SSO Portál smoke
-3. n8n health check
-4. KVT, NoGames WP smoke
-5. Moodle (přes BadWolf /courses)
+1. PROD smoke tests
+2. BadWolf regression (potřeba TEST_TOKEN)
+3. Rozšířit Pulse integration — fix auth token
+4. Portal HUB — investigate 301
+5. Billit JWT scope test (BILLIT_TEST_JWT_TOKEN)
