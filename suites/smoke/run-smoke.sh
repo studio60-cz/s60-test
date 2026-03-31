@@ -11,11 +11,11 @@ SERVICE=${2:-all}
 
 # Domain mapping
 # NOTE: BadWolf subdomena se liší podle prostředí:
-#   dev:  be.s60dev.cz   (legacy, zachováno)
+#   dev:  api.s60dev.cz  (změna 2026-03-27, be.s60dev.cz → 301 redirect)
 #   hub:  api.s60hub.cz
 #   prod: api.studio60.cz (DNS korekce 2026-03-12, be.studio60.cz = starý Merlin)
 case "$ENV" in
-  dev)   DOMAIN="s60dev.cz";  BE_SUBDOMAIN="be" ;;
+  dev)   DOMAIN="s60dev.cz";  BE_SUBDOMAIN="api" ;;
   hub)   DOMAIN="s60hub.cz";  BE_SUBDOMAIN="api" ;;
   prod)  DOMAIN="studio60.cz"; BE_SUBDOMAIN="api" ;;
   *)     echo "Unknown env: $ENV (dev|hub|prod)"; exit 1 ;;

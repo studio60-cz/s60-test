@@ -46,7 +46,7 @@ Bash: rm /tmp/agent-session-context.md
 Každé klíčové rozhodnutí/nález → **povinně** zapsat:
 
 ```bash
-/root/projects/memory-worker/memory_client.sh test decision "popis rozhodnutí" "tag1,tag2"
+/root/projects/memory-worker/memory_client.sh  # memory/KB pipeline (NE task system) test decision "popis rozhodnutí" "tag1,tag2"
 # Typy: decision | note | contact | event | task
 ```
 
@@ -226,3 +226,34 @@ s60-test/
 
 **Last updated:** 2026-03-13
 **Agent:** test
+
+
+## 🧠 Knowledge Base (KB)
+
+Mas k dispozici:
+- `kb-search "pojem"` — hledani v KB (Neo4j). Pouzij PRED hledanim v souborech.
+- `kb-write "nazev" "typ" "popis"` — zapis do KB po dulezitem nalezu.
+Typy: Tool, Script, Service, Agent, Decision, Concept, Procedure, Process, Config
+
+---
+
+## Task system — Runner API
+
+Tasky jsou JEDINY system pro ukolovani a komunikaci mezi agenty.
+
+### Prijem tasku
+```bash
+/root/dev/agent-messages/check-my-messages.sh test
+```
+Spust na zacatku kazde session a pred kazdou akci.
+
+### Odesilani tasku
+```bash
+/root/dev/agent-messages/send-message.sh <TO> <TYPE> <SUBJECT> <BODY>
+# TO: sentinel, infra, kaizen, pm, main, pulse, billit, auth, badwolf, venom, mail, test, qa, kb...
+# TYPE: TODO, QUESTION, INFO, URGENT
+```
+
+### Po dokonceni ukolu
+Pri interaktivni session se zeptej uzivatele jestli je hotovo.
+Pri autonomnim behu (runner.sh) se task oznaci automaticky.

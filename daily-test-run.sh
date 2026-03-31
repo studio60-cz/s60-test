@@ -203,6 +203,28 @@ Coverage: 6/13 služeb (46%)
 KAIZEN_EOF
 )" test
 
+
+# Report to QA (watchdog, coverage tracking)
+/root/dev/agent-messages/send-message.sh qa INFO \\
+  "Daily Test Report [$DATE]: $STATUS_EMOJI" \\
+  "$(cat <<QA_EOF
+TEST REPORT: $DATE
+
+Summary: $TOTAL_PASS/$TOTAL PASS ($PASS_RATE%) | $TOTAL_FAIL FAIL | $TOTAL_SKIP SKIP
+
+Suites:
+$(for r in "${SUITE_RESULTS[@]}"; do
+  name=$(echo "$r" | python3 -c "import sys,json;d=json.load(sys.stdin);print(d['name'])" 2>/dev/null)
+  st=$(echo "$r" | python3 -c "import sys,json;d=json.load(sys.stdin);print(d['status'])" 2>/dev/null)
+  echo "  - $name: $st"
+done)
+$FAIL_DETAILS
+
+Coverage: 6/13 služeb (46%)
+Report: $REPORT_FILE
+QA_EOF
+)" test
+
 # If failures → also notify responsible agents
 if [ "$TOTAL_FAIL" -gt 0 ]; then
   # Check which suites failed and notify responsible agents

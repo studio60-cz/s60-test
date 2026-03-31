@@ -19,9 +19,12 @@ cd "$AGENT_DIR"
 # Set agent identity
 export S60_AGENT="test"
 
-# Idle check — skip claude if no messages in Redis queue
-UNREAD=$(docker exec s60-redis redis-cli -a changeme123 --no-auth-warning LLEN agent:test:messages 2>/dev/null || echo "0")
-if [ "${UNREAD:-0}" -eq 0 ] 2>/dev/null; then
+# Idle check — skip claude if no messages in Relay queue
+source /root/.env 2>/dev/null || true
+UNREAD=$(curl -s --max-time 5 -H "X-Api-Key: $RELAY_API_KEY" \
+  "http://100.72.164.58:3080/api/queues" 2>/dev/null \
+  | python3 -c "import json,sys; print(json.load(sys.stdin).get('queues',{}).get('test',{}).get('unread',0))" 2>/dev/null || echo "0")
+if [ "${UNREAD:-0}" -eq 0 ]; then
   echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] Idle — 0 unread, skipping claude" >> "$LOG_FILE"
   exit 0
 fi

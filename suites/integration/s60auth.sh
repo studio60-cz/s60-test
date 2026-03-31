@@ -7,7 +7,7 @@
 set -euo pipefail
 
 AUTH_URL=${AUTH_URL:-"https://auth.s60dev.cz"}
-BE_URL=${BE_URL:-"https://be.s60dev.cz"}
+BE_URL=${BE_URL:-"https://api.s60dev.cz"}
 
 # Load credentials
 if [ -f "/root/dev/.env" ]; then

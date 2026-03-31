@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-BASE_URL=${BADWOLF_URL:-"https://be.s60dev.cz"}
+BASE_URL=${BADWOLF_URL:-"https://api.s60dev.cz"}
 AUTH_URL=${AUTH_URL:-"https://auth.s60dev.cz"}
 
 # Load token z .env pokud není set

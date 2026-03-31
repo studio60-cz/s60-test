@@ -16,7 +16,7 @@
 
 set -euo pipefail
 
-BASE_URL=${BADWOLF_URL:-"https://be.s60dev.cz"}
+BASE_URL=${BADWOLF_URL:-"https://api.s60dev.cz"}
 
 if [ -z "${TEST_TOKEN:-}" ] && [ -f "/root/dev/.env" ]; then
   TEST_TOKEN=$(grep "^TEST_TOKEN=" /root/dev/.env 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "")

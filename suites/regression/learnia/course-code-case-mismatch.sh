@@ -26,7 +26,7 @@ if [ "${LEARNIA_COURSE_CODE_SKIP:-1}" = "1" ]; then
   exit 0
 fi
 
-BASE_URL=${BADWOLF_URL:-"https://be.s60dev.cz"}
+BASE_URL=${BADWOLF_URL:-"https://api.s60dev.cz"}
 
 PASS=0; FAIL=0
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
