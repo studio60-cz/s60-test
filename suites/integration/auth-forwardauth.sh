@@ -1,8 +1,10 @@
 #!/bin/bash
-# Integration Tests — S60Auth ForwardAuth
-# @env dev hub
-# Testuje: token flow, header injection, invalidation
-# Vyžaduje: platný JWT token v $TEST_TOKEN
+# DEPRECATED 2026-03-31 — ForwardAuth byl odstraněn 2026-03-12
+# Auth je nyní per-service (JwtOrApiKeyGuard v BadWolf, @s60/auth-sdk v ostatních).
+# Tento test je stale — přeskakuje automaticky.
+# Testování bad tokenů: suites/regression/auth/bad-token-rejection.sh (JwtOrApiKeyGuard)
+echo "⏭ SKIP: auth-forwardauth.sh je DEPRECATED (ForwardAuth odstraněn 2026-03-12)"
+exit 0
 
 set -euo pipefail
 

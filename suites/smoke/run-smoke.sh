@@ -85,7 +85,8 @@ if [ "$SERVICE" = "all" ] || [ "$SERVICE" = "auth" ]; then
   check "auth-smoke-health"     "GET /api/health"               "https://auth.${DOMAIN}/api/health"                200 "S60-Auth"
   check "auth-smoke-jwks"       "GET /api/auth/oauth/jwks"      "https://auth.${DOMAIN}/api/auth/oauth/jwks"       200 "keys"
   check "auth-smoke-oidc"       "GET /openid-configuration"     "https://auth.${DOMAIN}/.well-known/openid-configuration" 200 "issuer"
-  check "auth-smoke-no-token"   "ForwardAuth rejects no token"  "https://${BE_SUBDOMAIN}.${DOMAIN}/applications"   401
+  # auth-smoke-no-token ODSTRANĚN 2026-03-31: ForwardAuth neexistuje (odstraněn 2026-03-12)
+  # GET /applications je @Public() per DEC-001 → 401 nikdy nenastane
 fi
 
 # ============================================================
