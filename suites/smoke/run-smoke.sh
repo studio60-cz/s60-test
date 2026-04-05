@@ -203,19 +203,26 @@ fi
 # ============================================================
 if [ "$SERVICE" = "all" ] || [ "$SERVICE" = "portal" ]; then
   echo -e "\n${YELLOW}-- SSO Portál --${NC}"
-  http_code=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 5 "https://portal.${DOMAIN}/" 2>/dev/null) || true
-  [ -z "$http_code" ] && http_code="000"
-  if [ "$http_code" = "000" ]; then
-    echo -e "  ${YELLOW}⏭ SKIP${NC} [portal-smoke-index] Not deployed on $ENV"
+  # Portal nasazen pouze na prod — na dev/hub přeskočit (není false failure)
+  if [ "$ENV" != "prod" ]; then
+    echo -e "  ${YELLOW}⏭ SKIP${NC} [portal-smoke-index] Portal nasazen pouze na prod (env: $ENV)"
     SKIP=$((SKIP + 1))
-  elif [ "$http_code" = "200" ] || [ "$http_code" = "403" ]; then
-    echo -e "  ${GREEN}✅ PASS${NC} [portal-smoke-index] GET / (HTTP $http_code — service up)"
-    PASS=$((PASS + 1))
+    RESULTS+=("{\"id\":\"portal-smoke-index\",\"status\":\"SKIP\",\"http_code\":\"\",\"note\":\"prod only\"}")
   else
-    echo -e "  ${RED}❌ FAIL${NC} [portal-smoke-index] GET / (HTTP $http_code)"
-    FAIL=$((FAIL + 1))
+    http_code=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 5 "https://portal.${DOMAIN}/" 2>/dev/null) || true
+    [ -z "$http_code" ] && http_code="000"
+    if [ "$http_code" = "000" ]; then
+      echo -e "  ${YELLOW}⏭ SKIP${NC} [portal-smoke-index] Not reachable"
+      SKIP=$((SKIP + 1))
+    elif [ "$http_code" = "200" ] || [ "$http_code" = "403" ]; then
+      echo -e "  ${GREEN}✅ PASS${NC} [portal-smoke-index] GET / (HTTP $http_code — service up)"
+      PASS=$((PASS + 1))
+    else
+      echo -e "  ${RED}❌ FAIL${NC} [portal-smoke-index] GET / (HTTP $http_code)"
+      FAIL=$((FAIL + 1))
+    fi
+    RESULTS+=("{\"id\":\"portal-smoke-index\",\"status\":\"$([ "$http_code" = "200" ] || [ "$http_code" = "403" ] && echo PASS || echo FAIL)\",\"http_code\":\"$http_code\"}")
   fi
-  RESULTS+=("{\"id\":\"portal-smoke-index\",\"status\":\"$([ "$http_code" = "200" ] || [ "$http_code" = "403" ] && echo PASS || echo FAIL)\",\"http_code\":\"$http_code\"}")
 fi
 
 # ============================================================
