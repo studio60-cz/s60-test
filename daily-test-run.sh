@@ -116,9 +116,9 @@ for dir in /root/dev/s60-test/suites/regression/*/; do
   for test_file in "$dir"*.sh; do
     [ -f "$test_file" ] || continue
     test_name="Regression: ${module}/$(basename "$test_file" .sh)"
-    # Billit DEV: sdílí hub DB od 2026-03-15 → hub klíče + /api URL
+    # Billit regression: používá HUB URL + HUB klíče (DEV nemá test data)
     if [ "$module" = "billit" ]; then
-      run_suite "$test_name" "REGRESSION_NOTIFY=1 BILLIT_URL=https://billit.s60dev.cz/api BILLIT_SLUG=${_BILLIT_HUB_SLUG:-test} TEST_BILLIT_SLUG=${_BILLIT_HUB_SLUG:-test} TEST_API_KEY_NO_SCOPE=${_BILLIT_HUB_KEY_NONE} TEST_API_KEY_READ_INVOICES=${_BILLIT_HUB_KEY_READ} TEST_API_KEY_WRITE_INVOICES=${_BILLIT_HUB_KEY_WRITE} bash $test_file"
+      run_suite "$test_name" "REGRESSION_NOTIFY=1 BILLIT_URL=https://billit.s60hub.cz/api BILLIT_SLUG=${_BILLIT_HUB_SLUG:-test} TEST_BILLIT_SLUG=${_BILLIT_HUB_SLUG:-test} TEST_API_KEY_NO_SCOPE=${_BILLIT_HUB_KEY_NONE} TEST_API_KEY_READ_INVOICES=${_BILLIT_HUB_KEY_READ} TEST_API_KEY_WRITE_INVOICES=${_BILLIT_HUB_KEY_WRITE} bash $test_file"
     else
       run_suite "$test_name" "REGRESSION_NOTIFY=1 bash $test_file"
     fi
