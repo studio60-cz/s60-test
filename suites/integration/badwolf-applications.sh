@@ -44,15 +44,15 @@ assert_contains() {
 echo -e "\n${YELLOW}=== BadWolf Integration — /applications ===${NC}\n"
 
 # -------------------------------------------------------------------
-echo -e "${YELLOW}-- AUTH: Unauthorized access --${NC}"
+echo -e "${YELLOW}-- AUTH: Public endpoint (DEC-001: GET /applications je @Public()) --${NC}"
 
-# Without token → 401
+# Without token → 200 (@Public per DEC-001, MVP scope)
 code=$(curl -sk -o /dev/null -w "%{http_code}" "$BASE_URL/applications")
-assert "bw-app-auth-01" "GET /applications without token → 401" "$code" "401"
+assert "bw-app-auth-01" "GET /applications without token → 200 (@Public)" "$code" "200"
 
-# Bad token → 401
+# Bad token → 200 (@Public, token ignorován)
 code=$(curl -sk -o /dev/null -w "%{http_code}" -H "Authorization: Bearer invalid.token.here" "$BASE_URL/applications")
-assert "bw-app-auth-02" "GET /applications with bad token → 401" "$code" "401"
+assert "bw-app-auth-02" "GET /applications with bad token → 200 (@Public)" "$code" "200"
 
 # -------------------------------------------------------------------
 echo -e "\n${YELLOW}-- LIST: Pagination --${NC}"

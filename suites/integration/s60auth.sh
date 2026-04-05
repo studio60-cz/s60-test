@@ -124,13 +124,15 @@ else
 fi
 
 # ----------------------------------------------------------------
-echo -e "\n${YELLOW}-- 6. ForwardAuth (token validation) --${NC}"
+# Sekce 6 ODSTRANĚNA 2026-04-05: ForwardAuth odstraněn 2026-03-12 (DEC-001)
+# auth-21/22/23 testovaly /applications → 401, ale endpoint je @Public() per DEC-001
+# auth-30 testoval /applications s tokenem → 200 (stale, mislabeled jako ForwardAuth)
+# ----------------------------------------------------------------
+echo -e "\n${YELLOW}-- 6. BadWolf public endpoints --${NC}"
 
-check_status "auth-21" "ForwardAuth: no token → 401"              "$BE_URL/applications"   "401"
-check_status "auth-22" "ForwardAuth: malformed token → 401"       "$BE_URL/applications"   "401"  -H "Authorization: Bearer bad.token"
-check_status "auth-23" "ForwardAuth: fake RSA JWT → 401"          "$BE_URL/applications"   "401"  -H "Authorization: Bearer eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiIxMjMifQ.invalidsig"
-check_status "auth-24" "ForwardAuth: public /health passes"        "$BE_URL/health"         "200"
-check_status "auth-25" "ForwardAuth: public /courses passes"       "$BE_URL/courses"        "200"
+# BadWolf public endpoints (auth není potřeba)
+check_status "auth-24" "BadWolf: GET /health → 200 (public)"   "$BE_URL/health"   "200"
+check_status "auth-25" "BadWolf: GET /courses → 200 (public)"  "$BE_URL/courses"  "200"
 
 # ----------------------------------------------------------------
 echo -e "\n${YELLOW}-- 7. Userinfo Endpoint (requires valid token) --${NC}"
@@ -164,9 +166,8 @@ else
     echo "$body" | grep -q '"email"' && pass "auth-28" "Userinfo response contains email field" || fail "auth-28" "Userinfo response missing email"
     echo "$body" | grep -q '"sub"' && pass "auth-29" "Userinfo response contains sub (userId)" || fail "auth-29" "Userinfo response missing sub"
 
-    # ForwardAuth with valid token → 200
-    code=$(curl -sk -o /dev/null -w "%{http_code}" -H "Authorization: Bearer $TEST_TOKEN" "$BE_URL/applications")
-    [ "$code" = "200" ] && pass "auth-30" "ForwardAuth: valid token → 200 on /applications" || fail "auth-30" "ForwardAuth with valid token" "got $code"
+    # auth-30 ODSTRANĚN 2026-04-05: testoval ForwardAuth (neexistuje od 2026-03-12)
+    # /applications je @Public() — vrací 200 bez i s tokenem (netestuje auth)
   fi
 fi
 
