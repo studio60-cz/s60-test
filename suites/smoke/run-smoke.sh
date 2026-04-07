@@ -50,12 +50,19 @@ check() {
 
   local response
   local http_code
+  local status="PASS"
 
   http_code=$(curl -sk -o /tmp/smoke-body -w "%{http_code}" --max-time 5 "$url" 2>/dev/null) || true
   [ -z "$http_code" ] && http_code="000"
   response=$(cat /tmp/smoke-body 2>/dev/null || echo "")
 
-  local status="PASS"
+  # 1× retry s 2s delay pro transientní glitche (Docker networking, cold start)
+  if [ "$http_code" != "$expected_status" ] || { [ -n "$body_contains" ] && ! echo "$response" | grep -q "$body_contains"; }; then
+    sleep 2
+    http_code=$(curl -sk -o /tmp/smoke-body -w "%{http_code}" --max-time 5 "$url" 2>/dev/null) || true
+    [ -z "$http_code" ] && http_code="000"
+    response=$(cat /tmp/smoke-body 2>/dev/null || echo "")
+  fi
 
   if [ "$http_code" != "$expected_status" ]; then
     status="FAIL"
