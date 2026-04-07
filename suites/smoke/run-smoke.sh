@@ -142,13 +142,9 @@ fi
 # ============================================================
 if [ "$SERVICE" = "all" ] || [ "$SERVICE" = "billit" ]; then
   echo -e "\n${YELLOW}-- Billit --${NC}"
-  # Billit nemusí být na všech envs; vždy HTTPS (301 = HTTP→HTTPS redirect = chyba v URL)
-  # DEV: nginx /api/* → billit-api; HUB/PROD: /health přímo
-  if [ "$ENV" = "dev" ]; then
-    BILLIT_HEALTH_URL="https://billit.${DOMAIN}/api/health"
-  else
-    BILLIT_HEALTH_URL="https://billit.${DOMAIN}/health"
-  fi
+  # Billit: /health je dostupné přímo na všech envs (bez /api/ prefixu)
+  # /api/health → 502 na dev (nginx proxy neprochází správně přes /api/)
+  BILLIT_HEALTH_URL="https://billit.${DOMAIN}/health"
   BILLIT_HEALTH_URL="${BILLIT_HEALTH_URL}"
   http_code=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 5 "$BILLIT_HEALTH_URL" 2>/dev/null) || true
   [ -z "$http_code" ] && http_code="000"
